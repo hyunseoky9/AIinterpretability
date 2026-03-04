@@ -5,17 +5,18 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR, LambdaLR, MultiStepLR, CosineAnnealingLR
-from torch.distributions import Beta, Dirichlet
+from torch.distributions import Beta, Dirichlet, Categorical, Independent, Bernoulli
 
-
-class Actor_beta_dirichlet(nn.Module):
+class Actor_metapop1_MDP(nn.Module):
     def __init__(self, input_dims, n_actions, 
-                 hidden_size, hidden_num, 
-                    lrdecayrate, lr,
-                    min_lr, lrdecaytype,
-                    scheduler_info, device, entropy_loss):
-        
-        super(Actor_beta_dirichlet, self).__init__()
+                hidden_size, hidden_num, 
+                lrdecayrate, lr,
+                min_lr, lrdecaytype,
+                scheduler_info, device, entropy_loss, info):
+        '''
+        Actor architecture for metapop1 without partial observability (full observation of occupancy and dispersal regime)
+        '''
+        super(Actor_metapop1_MDP, self).__init__()
         self.entropy_loss = entropy_loss
 
         # build the model
@@ -37,77 +38,213 @@ class Actor_beta_dirichlet(nn.Module):
         elif lrdecaytype == 'multistep':
             self.scheduler = MultiStepLR(self.optimizer, milestones=scheduler_info['lr_drop_ep'],
                                           gamma=scheduler_info['lr_drop_gamma'])
-
+        
+        self.envinfo = info
+        self.npatches = info['npatches']
+        self.kR = info['kR']
+        self.kS = info['kS']
+        self.Rheadsize = info['Rheadsize']
+        self.Sheadsize = info['Sheadsize']
+        self.Rbernoulli = info['Rbernoulli']
+        self.Sbernoulli = info['Sbernoulli']
+        
     def forward(self, state):
-        x = self.actor(state)
-        # process beta dist paramgeters
-        a = F.softplus(x[:, 0]) + 1e-3
-        b = F.softplus(x[:, 1]) + 1e-3
-        a = T.clamp(a, max=1e3)
-        b = T.clamp(b, max=1e3)
-        # process dirichlet dist parameters
-        c = F.softplus(x[:, 2:]) + 1e-3
-        c = T.clamp(c, max=1e3)
-        # merge a,b, and c back together
-        x = T.cat((a.unsqueeze(1), b.unsqueeze(1), c), dim=1)
+        x = self.actor(state) 
         return x
 
     def getdist(self, x):
         # process beta dist paramgeters
-        a = F.softplus(x[:, 0]) + 1e-3
-        b = F.softplus(x[:, 1]) + 1e-3
-        a = T.clamp(a, max=1e3)
-        b = T.clamp(b, max=1e3)
-        # process dirichlet dist parameters
-        c = F.softplus(x[:, 2:]) + 1e-3
-        c = T.clamp(c, max=1e3)
-
-        betadist = Beta(a, b)
-        dirichletdist = Dirichlet(c)
-        return betadist, dirichletdist
+        if self.Rbernoulli == 1:
+            x[:, 0:self.Rheadsize] = T.sigmoid(x[:, 0:self.Rheadsize])
+            Rdist = T.distributions.Independent(
+                Bernoulli(probs=x[:, 0:self.Rheadsize]),
+                1
+            )
+        else:
+            Rdist = None
+        if self.Sbernoulli == 1:
+            x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize] = T.sigmoid(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize])
+            Sdist = T.distributions.Independent(
+                Bernoulli(probs=x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize]),
+                1
+            )
+        else:
+            Sdist = None
+        return Rdist, Sdist
     
-    def _clamp_and_project_simplex(self, a_simplex):
-        a_simplex = a_simplex.clamp(min=1e-6)  # Clamp to avoid numerical issues
-        a_simplex = a_simplex / a_simplex.sum(dim=-1, keepdim=True)
-        return a_simplex
-    
-    def get_log_prob(self, states, actions):
-        x = self.actor(states)
-        betadist, dirichletdist = self.getdist(x)
-        a0 = actions[:, 0].clamp(1e-6, 1.0 - 1e-6)
-        a1 = self._clamp_and_project_simplex(actions[:, 1:])
+    def sample_wo_replacement(self, logits, k):
+        """
+        logits: [1, n+1] including STOP
+        k: max number of selections
+        """
 
-        return betadist.log_prob(a0) + dirichletdist.log_prob(a1)
+        stop_idx = logits.shape[1] - 1
+        # Gumbel noise
+        g = -T.log(-T.log(T.rand_like(logits)))
+        scores = logits + g
+        ranks = T.argsort(scores, dim=1, descending=True)
+        stop_idx_chosen = False
+        chosen = []
+        for idx in ranks[0]:
+            idx = idx.item()
+            if idx == stop_idx:
+                stop_idx_chosen = True
+                break
+            chosen.append(idx)
+            if len(chosen) >= k:
+                break
 
-    def get_entropy(self, states):
-        x = self.actor(states)
-        betadist, dirichletdist = self.getdist(x)
-        ent = betadist.entropy() + dirichletdist.entropy()
-        return ent
-    
+        a = T.zeros(self.npatches, device=logits.device)
+        if len(chosen) > 0:
+            a[0,T.tensor(chosen)] = 1
+        chosen_idx = chosen + ([stop_idx] if stop_idx_chosen else [])
+        chosen_idx_padded = chosen_idx + [-1] * (k - len(chosen_idx))
+        chosen_len = len(chosen_idx)
+        return a, T.tensor(chosen_idx_padded, device=logits.device), chosen_len
+
+    def logprob_entropy_wo_replacement_batched(self, logits, seq_idx, seq_len):
+
+        """
+        logits:  (B, N) logits over patches + STOP
+        seq_idx: (B, Lmax) long, padded with -1
+        seq_len: (B,) number of valid steps (includes STOP if it was sampled)
+        Returns:
+        logp: (B,)
+        ent:  (B,) (0 if entropy_loss=False)
+        """
+        B, N = logits.shape
+        Lmax = seq_idx.shape[1]
+        device = logits.device
+
+        # remaining mask: True means available
+        remaining = T.ones((B, N), dtype=T.bool, device=device)
+
+        logp = T.zeros((B,), device=device)
+        ent  = T.zeros((B,), device=device)
+
+        for t in range(Lmax):
+            # which batch elements are still active at this step?
+            active = t < seq_len
+            if not active.any():
+                break
+
+            # mask invalid choices already removed
+            step_logits = logits.masked_fill(~remaining, float("-inf"))
+
+            # compute log-probs and probs
+            log_probs = F.log_softmax(step_logits, dim=-1)
+            probs = log_probs.exp()
+
+            if self.entropy_loss:
+                # entropy of categorical over remaining (per batch)
+                # H = -sum p log p, but ignore -inf entries (p=0)
+                ent_step = -(probs * log_probs).masked_fill(~remaining, 0.0).sum(dim=-1)
+                ent[active] += ent_step[active]
+
+            # gather chosen indices for active rows
+            idx_t = seq_idx[:, t]                      # (B,)
+            # Only add logp where active and idx_t != -1
+            valid_choice = active & (idx_t >= 0)
+            if valid_choice.any():
+                logp[valid_choice] += log_probs[valid_choice, idx_t[valid_choice]]
+                # remove chosen items (no replacement)
+                remaining[valid_choice, idx_t[valid_choice]] = False
+        return logp, ent
+
+    def logprob_entropy_without_replacement(self, logits, sampled_idx, seqlen, eps=1e-12, entropycalc=False):
+        p = F.softmax(logits, dim=1).squeeze(0).clone()
+        logp = T.tensor(0.0, device=logits.device)
+        entropy = T.tensor(0.0, device=logits.device)
+        sampled_idx = sampled_idx[:seqlen]
+        for idx in sampled_idx:
+            z = p.sum()
+            p_norm = (p / z).clamp_min(eps)
+            if self.entropy_loss and entropycalc:
+                entropy = entropy + (-(p_norm * T.log(p_norm)).sum())
+            
+            prob = p_norm[idx].clamp_min(eps)
+            logp = logp + T.log(prob)
+            p[idx] = 0.0
+        return logp, entropy
+
     def getaction(self, state, get_action_only=False):
         x = self.actor(state)
-        betadist, dirichletdist = self.getdist(x)
-
-        a0 = betadist.sample().clamp(1e-6, 1.0 - 1e-6)
-        a1 = self._clamp_and_project_simplex(dirichletdist.sample())
-
-        action = T.cat([a0.unsqueeze(1), a1], dim=1)
+        Rdist, Sdist = self.getdist(x)
+        if self.Rbernoulli == 1:
+            aR = Rdist.sample()
+        else:
+            aR, sampledR, seqlenR = self.sample_wo_replacement(x[:, 0:self.Rheadsize], self.kR)
+        if self.Sbernoulli == 1:
+            aS = Sdist.sample()
+        else:
+            aS, sampledS, seqlenS = self.sample_wo_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], self.kS)
+        action = T.cat([aR, aS], dim=1)
 
         if get_action_only:
             return action
-
-        logprob = betadist.log_prob(a0) + dirichletdist.log_prob(a1)
-        return action, logprob
+        
+        if self.Rbernoulli == 1:
+            logprobR = Rdist.log_prob(aR)
+        else:
+            logprobR, _ = self.logprob_entropy_without_replacement(x[:, 0:self.Rheadsize], sampledR, seqlenR, entropycalc=False)
+        if self.Sbernoulli == 1:
+            logprobS = Sdist.log_prob(aS)
+        else: 
+            logprobS, _ = self.logprob_entropy_without_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], sampledS, seqlenS, entropycalc=False)
+        logprob = logprobR + logprobS
+        sampleinfo = T.cat([
+            sampledR,                     # (LmaxR,)
+            sampledS,                     # (LmaxS,)
+            T.tensor([seqlenR, seqlenS], device=state.device, dtype=T.long)
+        ], dim=0)  # (LmaxR+LmaxS+2,)
+        return action, logprob, sampleinfo
     
+    def get_log_prob(self, states, actions, sampled_info):
+        x = self.actor(states)
+        Rdist, Sdist = self.getdist(x)
+        sampled_info = T.as_tensor(sampled_info, dtype=T.long, device=states.device)
+        if self.Rbernoulli == 1:
+            logprobR = Rdist.log_prob(actions[:, :self.Rheadsize]).sum(dim=-1)
+            entropyR = Rdist.entropy().sum(dim=-1)
+        else:
+            logprobR, entropyR = self.logprob_entropy_wo_replacement_batched(
+                x[:, 0:self.Rheadsize],
+                sampled_info[:,:self.kR], 
+                sampled_info[:,-2])
+        if self.Sbernoulli == 1:
+            logprobS = Sdist.log_prob(actions[:, self.Rheadsize:self.Rheadsize+self.Sheadsize]).sum(dim=-1)
+            entropyS = Sdist.entropy().sum(dim=-1)
+        else:
+            logprobS, entropyS = self.logprob_entropy_wo_replacement_batched(
+                x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize],
+                sampled_info[:,self.kR: self.kR+self.kS],
+                sampled_info[:,-1])
+        return logprobR + logprobS, entropyR + entropyS
+
+    def deterministic_sample_without_replacement(self, logits, k):
+        stop_idx = logits.shape[1] - 1
+        sorted_indices = T.argsort(logits, dim=1, descending=True)
+
+        # first position where STOP appears (if any)
+        pos = (sorted_indices == stop_idx).nonzero(as_tuple=False)
+        stop_pos = pos[0,0].item() if pos.numel() > 0 else logits.shape[1]
+        cut_idx = min(k, stop_pos)
+        chosen_indices = sorted_indices[0][:cut_idx]
+        a = T.zeros(self.npatches, device=logits.device)
+        a[chosen_indices] = 1
+        return a
+
     def get_deterministic_action(self, state):
         x = self.actor(state)
-        betadist, dirichletdist = self.getdist(x)
-
-        a0 = betadist.mean
-        a1 = dirichletdist.mean
-
-        action = T.cat([a0.unsqueeze(1), a1], dim=1)
+        Rdist, Sdist = self.getdist(x)
+        if self.Rbernoulli == 1:
+            aR = (Rdist.probs > 0.5).float()
+        else:
+            aR = self.deterministic_sample_without_replacement(x[:, 0:self.Rheadsize], self.kR)
+        if self.Sbernoulli == 1:
+            aS = (Sdist.probs > 0.5).float()
+        else:
+            aS = self.deterministic_sample_without_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], self.kS)
+        action = T.cat([aR, aS], dim=1)
         return action
     
-

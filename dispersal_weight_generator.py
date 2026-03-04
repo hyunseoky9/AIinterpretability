@@ -36,7 +36,7 @@ class dispersal_weight_generator:
                 scale = self.target_mean_incoming / mean_incoming
                 weights = weights * scale
 
-        return weights
+        return weights, patch_coords
     
 
 
@@ -47,9 +47,13 @@ if __name__ == "__main__":
     # generate 100 weights for patch size 4:22
     for patchnum in range(4,23):
         weights_collection = []
+        coord_collection = []
         for i in range(100):
-            weight = dispgen.uniform_dist(patchnum=patchnum, kerneltype='exponential', normalization=2)
+            weight, patch_coords = dispgen.uniform_dist(patchnum=patchnum, kerneltype='exponential', normalization=2)
             weights_collection.append(weight)
+            coord_collection.append(patch_coords)
         with open(f'./dispersal_weights/uniform_dispersal_weights_patchnum{patchnum}.pkl', 'wb') as f:
             pickle.dump(weights_collection, f)
-        
+        with open(f'./dispersal_weights/uniform_dispersal_coords_patchnum{patchnum}.pkl', 'wb') as f:
+            pickle.dump(coord_collection, f)
+            

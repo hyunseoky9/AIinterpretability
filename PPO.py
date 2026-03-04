@@ -8,7 +8,7 @@ import os
 import numpy as np
 from calc_performance3 import calc_performance
 from calc_performance3_parallel import calc_performance_parallel
-from ppo_actor import Actor_beta_dirichlet
+from ppo_actor import Actor_beta_dirichlet, Actor_metapop1_MDP
 from ppo_critic import Critic
 import random
 from FixedMeanStd import FixedMeanStd
@@ -67,8 +67,8 @@ class PPO():
 
         # parameters
         ## NN parameters
-        self.state_size = len(self.env.obsspace_dim)
-        self.action_size = len(self.env.actionspace_dim)
+        self.state_size = len(self.env.obsspace_dim) if type(self.env.obsspace_dim) == list else self.env.obsspace_dim 
+        self.action_size = len(self.env.actionspace_dim) if type(self.env.actionspace_dim) == list else self.env.actionspace_dim
         self.actor_hidden_num = int(paramdf['actor_hidden_num']) # number of hidden layers in the actor network
         self.actor_hidden_size = eval(paramdf['actor_hidden_size']) # size of hidden layers in the actor network
         self.critic_hidden_num = int(paramdf['critic_hidden_num']) # number of hidden layers in the critic network for trunk
@@ -145,6 +145,29 @@ class PPO():
                                         self.actor_lrdecayrate, self.actor_lr,
                                         self.actor_min_lr, self.actor_lrdecaytype, 
                                         self.scheduler_info, self.device, self.entropy_loss_included)
+        elif 'metapop1' in self.env.envID:
+            if self.env.partial_observability == 1:
+                extrainfo = {'npatches': self.env.patchnum, 'kR': self.env.kR, 'kS': self.env.kS}
+                actionsize = self.action_size
+                if self.env.kR < self.env.patchnum:
+                    extrainfo['Rheadsize'] = self.env.kR + 1 # restoration head size.
+                    extrainfo['Rbernoulli'] = 0
+                    actionsize += 1 # add 1 for STOP token when sampling
+                else:
+                    extrainfo['Rheadsize'] = self.env.patchnum
+                    extrainfo['Rbernoulli'] = 1
+                if self.env.kS < self.env.patchnum:
+                    extrainfo['Sheadsize'] = self.env.kS + 1 # supplementation head size
+                    extrainfo['Sbernoulli'] = 0
+                    actionsize += 1 # add 1 for STOP token when sampling
+                else: 
+                    extrainfo['Sheadsize'] = self.env.patchnum
+                    extrainfo['Sbernoulli'] = 1
+                actor = Actor_metapop1_MDP(self.state_size, actionsize, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
+                                            self.actor_hidden_size, self.actor_hidden_num,
+                                            self.actor_lrdecayrate, self.actor_lr,
+                                            self.actor_min_lr, self.actor_lrdecaytype, 
+                                            self.scheduler_info, self.device, self.entropy_loss_included, extrainfo)
         else: # FOR NOW just use the same actor architecture for all envs, but can change this in the future if needed
             actor = Actor_beta_dirichlet(self.state_size, self.action_size+1, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
                                         self.actor_hidden_size, self.actor_hidden_num,
@@ -190,7 +213,7 @@ class PPO():
                 # STANDARDIZE OBS
                 observation = self.rms.normalize(self.env.obs) if self.standardize else self.env.obs
                 with torch.no_grad():
-                    action, prob, val = self.agent.choose_action(observation)
+                    action, prob, val, ainfo = self.agent.choose_action(observation)
                 observation_, reward, done, info = self.env.step(action)
                 if self.standardize: # standardize
                     self.rms.stored_batch.append(observation_) # store the state for running mean std calculation
@@ -199,7 +222,7 @@ class PPO():
                     self.rms.rolloutnum += 1
                 n_steps += 1
                 score += reward
-                self.agent.remember(observation, action, prob, val, reward, done)
+                self.agent.remember(observation, action, prob, val, reward, done, ainfo)
                 if n_steps % self.rolloutlen == 0:
                     self.agent.learn()
                     if not self.did_first_update:

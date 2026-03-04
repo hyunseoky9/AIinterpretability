@@ -13,6 +13,7 @@ class PPOMemory:
         self.actions = []
         self.rewards = []
         self.dones = []
+        self.info = []
 
         self.minibatch_size = minibatch_size
 
@@ -29,15 +30,17 @@ class PPOMemory:
                 np.array(self.vals), \
                 np.array(self.rewards), \
                 np.array(self.dones), \
+                self.info, \
                 batches
     
-    def store_memory(self, state, prob, val, action, reward, done):
+    def store_memory(self, state, prob, val, action, reward, done, info=None):
         self.states.append(state)
         self.probs.append(prob)
         self.vals.append(val)
         self.actions.append(action)
         self.rewards.append(reward)
         self.dones.append(done)
+        self.info.append(info)
     
     def clear_memory(self):
         self.states = []
@@ -46,6 +49,7 @@ class PPOMemory:
         self.actions = []
         self.rewards = []
         self.dones = []
+        self.info = []
 
 class PPOAgent:
     def __init__(self, c1, c2, entropy_loss, 
@@ -70,8 +74,8 @@ class PPOAgent:
         self.memory = PPOMemory(minibatch_size)
         self.adv_normalization = adv_normalization
 
-    def remember(self, state, action, probs, vals, reward, done):
-        self.memory.store_memory(state, probs, vals, action, reward, done)
+    def remember(self, state, action, probs, vals, reward, done, info=None):
+        self.memory.store_memory(state, probs, vals, action, reward, done, info)
     
     def save_checkpoint(self, network,path):
         T.save(network, path)
@@ -82,17 +86,15 @@ class PPOAgent:
 
     def choose_action(self, observation):
         state = T.tensor(observation, dtype=T.float).unsqueeze(0).to(self.actor.device)
-
         
-        action, logprob = self.actor.getaction(state)
+        action, logprob, info = self.actor.getaction(state)
         value = self.critic(state)
-
     
         probs = T.squeeze(logprob).item()
         action = T.squeeze(action).cpu().detach().numpy()
         value = T.squeeze(value).item()
 
-        return action, probs, value
+        return action, probs, value, info
 
     def compute_gae_1d(self, rewards,values,dones,gamma ,lam ,last_value=0.0):
         """
@@ -134,7 +136,7 @@ class PPOAgent:
     def learn(self):
         for _ in range(self.n_epochs):
             state_arr, action_arr, old_prob_arr, vals_arr,\
-            reward_arr, done_arr, batches = \
+            reward_arr, done_arr, info_arr, batches = \
                 self.memory.generate_batches()
             
             values = vals_arr
@@ -163,11 +165,12 @@ class PPOAgent:
                 states = T.tensor(state_arr[batch], dtype=T.float).to(self.actor.device)
                 old_probs = T.tensor(old_prob_arr[batch]).to(self.actor.device)
                 actions = T.tensor(action_arr[batch]).to(self.actor.device)
+                info = info_arr[batch] # info is a list of dicts, not converted to tensor
                 # calculate critic value with new network
                 critic_value = self.critic(states)
                 critic_value = T.squeeze(critic_value)
                 # calculate new log probs with new network
-                new_probs = self.actor.get_log_prob(states, actions)
+                new_probs, current_entropy = self.actor.get_log_prob(states, actions, info)
                 prob_ratio = (new_probs - old_probs).exp()
                 # KL estimate
                 approx_kl = (old_probs - new_probs).mean()
@@ -186,7 +189,6 @@ class PPOAgent:
                 total_loss = actor_loss + self.c1 * critic_loss
                 # add entropy loss if using
                 if self.entropy_loss:
-                    current_entropy = self.actor.get_entropy(states)
                     entropy_loss = -self.c2 * current_entropy.mean()
                     total_loss += entropy_loss
                 # take a gradient step
