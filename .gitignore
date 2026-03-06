@@ -1,3 +1,4 @@
 dispersal_weights/
 value_iteration/
+PPO_results/
 *.pyc

@@ -55,19 +55,13 @@ class Actor_metapop1_MDP(nn.Module):
     def getdist(self, x):
         # process beta dist paramgeters
         if self.Rbernoulli == 1:
-            x[:, 0:self.Rheadsize] = T.sigmoid(x[:, 0:self.Rheadsize])
-            Rdist = T.distributions.Independent(
-                Bernoulli(probs=x[:, 0:self.Rheadsize]),
-                1
-            )
+            xR = T.sigmoid(x[:, :self.Rheadsize])
+            Rdist = Independent(Bernoulli(probs=xR), 1)
         else:
             Rdist = None
         if self.Sbernoulli == 1:
-            x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize] = T.sigmoid(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize])
-            Sdist = T.distributions.Independent(
-                Bernoulli(probs=x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize]),
-                1
-            )
+            xS = T.sigmoid(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize])
+            Sdist = Independent(Bernoulli(probs=xS), 1)
         else:
             Sdist = None
         return Rdist, Sdist
@@ -96,11 +90,12 @@ class Actor_metapop1_MDP(nn.Module):
 
         a = T.zeros(self.npatches, device=logits.device)
         if len(chosen) > 0:
-            a[0,T.tensor(chosen)] = 1
+            a[T.tensor(chosen, device=logits.device, dtype=T.long)] = 1
+        a = a.unsqueeze(0)
         chosen_idx = chosen + ([stop_idx] if stop_idx_chosen else [])
         chosen_idx_padded = chosen_idx + [-1] * (k - len(chosen_idx))
         chosen_len = len(chosen_idx)
-        return a, T.tensor(chosen_idx_padded, device=logits.device), chosen_len
+        return a, T.tensor(chosen_idx_padded, device=logits.device, dtype=T.long), chosen_len
 
     def logprob_entropy_wo_replacement_batched(self, logits, seq_idx, seq_len):
 
@@ -125,30 +120,35 @@ class Actor_metapop1_MDP(nn.Module):
         for t in range(Lmax):
             # which batch elements are still active at this step?
             active = t < seq_len
-            if not active.any():
+            active_idx = active.nonzero(as_tuple=False).squeeze(1)
+            if active_idx.numel() == 0:
                 break
 
-            # mask invalid choices already removed
-            step_logits = logits.masked_fill(~remaining, float("-inf"))
-
+            # slice only active rows.
+            rem_a = remaining[active_idx]
+            logits_a = logits[active_idx]
+            # mask invalid choices
+            step_logits_a = logits_a.masked_fill(~rem_a, float("-inf"))
             # compute log-probs and probs
-            log_probs = F.log_softmax(step_logits, dim=-1)
-            probs = log_probs.exp()
+            log_probs_a = F.log_softmax(step_logits_a, dim=-1)
 
             if self.entropy_loss:
                 # entropy of categorical over remaining (per batch)
                 # H = -sum p log p, but ignore -inf entries (p=0)
-                ent_step = -(probs * log_probs).masked_fill(~remaining, 0.0).sum(dim=-1)
-                ent[active] += ent_step[active]
+                probs_a = log_probs_a.exp()
+                masked_probs_a = probs_a.masked_fill(~rem_a, 0.0)
+                masked_log_probs_a = log_probs_a.masked_fill(~rem_a, 0.0)
+                ent_step_a = -(masked_probs_a * masked_log_probs_a).sum(dim=-1)
+                ent[active_idx] += ent_step_a
 
             # gather chosen indices for active rows
-            idx_t = seq_idx[:, t]                      # (B,)
-            # Only add logp where active and idx_t != -1
-            valid_choice = active & (idx_t >= 0)
-            if valid_choice.any():
-                logp[valid_choice] += log_probs[valid_choice, idx_t[valid_choice]]
+            idx_t_a = seq_idx[active_idx, t]
+            valid_a = idx_t_a >= 0
+            if valid_a.any():
+                chosen_a = idx_t_a[valid_a]
+                logp[active_idx[valid_a]] += log_probs_a[valid_a, chosen_a]
                 # remove chosen items (no replacement)
-                remaining[valid_choice, idx_t[valid_choice]] = False
+                remaining[active_idx[valid_a], chosen_a] = False
         return logp, ent
 
     def logprob_entropy_without_replacement(self, logits, sampled_idx, seqlen, eps=1e-12, entropycalc=False):
@@ -172,10 +172,14 @@ class Actor_metapop1_MDP(nn.Module):
         Rdist, Sdist = self.getdist(x)
         if self.Rbernoulli == 1:
             aR = Rdist.sample()
+            sampledR = T.tensor([], device=state.device, dtype=T.long)
+            seqlenR = 0
         else:
             aR, sampledR, seqlenR = self.sample_wo_replacement(x[:, 0:self.Rheadsize], self.kR)
         if self.Sbernoulli == 1:
             aS = Sdist.sample()
+            sampledS = T.tensor([], device=state.device, dtype=T.long)
+            seqlenS = 0
         else:
             aS, sampledS, seqlenS = self.sample_wo_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], self.kS)
         action = T.cat([aR, aS], dim=1)
@@ -184,40 +188,46 @@ class Actor_metapop1_MDP(nn.Module):
             return action
         
         if self.Rbernoulli == 1:
-            logprobR = Rdist.log_prob(aR)
+            logprobR = Rdist.log_prob(aR).item()
         else:
             logprobR, _ = self.logprob_entropy_without_replacement(x[:, 0:self.Rheadsize], sampledR, seqlenR, entropycalc=False)
         if self.Sbernoulli == 1:
-            logprobS = Sdist.log_prob(aS)
+            logprobS = Sdist.log_prob(aS).item()
         else: 
             logprobS, _ = self.logprob_entropy_without_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], sampledS, seqlenS, entropycalc=False)
         logprob = logprobR + logprobS
         sampleinfo = T.cat([
-            sampledR,                     # (LmaxR,)
-            sampledS,                     # (LmaxS,)
+            sampledR,
+            sampledS,
             T.tensor([seqlenR, seqlenS], device=state.device, dtype=T.long)
-        ], dim=0)  # (LmaxR+LmaxS+2,)
+        ], dim=0)  
         return action, logprob, sampleinfo
     
-    def get_log_prob(self, states, actions, sampled_info):
+    def get_log_prob(self, states, actions, infoNbatch):
+        '''
+        sampled_info = (info_arr, batch) where info_arr is any info and batch is the indices for the current minibatch.
+        '''
+        info_arr = infoNbatch[0] # select the info for the current batch
+        batch = infoNbatch[1]
         x = self.actor(states)
         Rdist, Sdist = self.getdist(x)
-        sampled_info = T.as_tensor(sampled_info, dtype=T.long, device=states.device)
+        sampled_info = T.stack(info_arr, dim=0).to(states.device, dtype=T.long)[batch]
         if self.Rbernoulli == 1:
-            logprobR = Rdist.log_prob(actions[:, :self.Rheadsize]).sum(dim=-1)
-            entropyR = Rdist.entropy().sum(dim=-1)
+            logprobR = Rdist.log_prob(actions[:, :self.npatches])
+            entropyR = Rdist.entropy()
         else:
             logprobR, entropyR = self.logprob_entropy_wo_replacement_batched(
                 x[:, 0:self.Rheadsize],
                 sampled_info[:,:self.kR], 
                 sampled_info[:,-2])
         if self.Sbernoulli == 1:
-            logprobS = Sdist.log_prob(actions[:, self.Rheadsize:self.Rheadsize+self.Sheadsize]).sum(dim=-1)
-            entropyS = Sdist.entropy().sum(dim=-1)
+            logprobS = Sdist.log_prob(actions[:, self.npatches:self.npatches+self.Sheadsize])
+            entropyS = Sdist.entropy()
         else:
+            Ridx = 0 if self.Rbernoulli == 1 else self.kR
             logprobS, entropyS = self.logprob_entropy_wo_replacement_batched(
                 x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize],
-                sampled_info[:,self.kR: self.kR+self.kS],
+                sampled_info[:,Ridx: Ridx+self.kS],
                 sampled_info[:,-1])
         return logprobR + logprobS, entropyR + entropyS
 
@@ -236,15 +246,15 @@ class Actor_metapop1_MDP(nn.Module):
 
     def get_deterministic_action(self, state):
         x = self.actor(state)
-        Rdist, Sdist = self.getdist(x)
+        
         if self.Rbernoulli == 1:
-            aR = (Rdist.probs > 0.5).float()
+            aR = (T.sigmoid(x[:, 0:self.Rheadsize]) > 0.5).float()
         else:
-            aR = self.deterministic_sample_without_replacement(x[:, 0:self.Rheadsize], self.kR)
+            aR = self.deterministic_sample_without_replacement(x[:, 0:self.Rheadsize], self.kR).unsqueeze(0)
         if self.Sbernoulli == 1:
-            aS = (Sdist.probs > 0.5).float()
+            aS = (T.sigmoid(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize]) > 0.5).float()
         else:
-            aS = self.deterministic_sample_without_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], self.kS)
+            aS = self.deterministic_sample_without_replacement(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], self.kS).unsqueeze(0)
         action = T.cat([aR, aS], dim=1)
         return action
     

@@ -1,0 +1,6 @@
+﻿ID,partial_observability,patchnum,action_portfolio,survey_is_action,dispersal_regime,terminal_penalty,limit_actions,dispersal_type,dispersal_ID,paramsetID,kR,kS,dim2state,dim2state_with_C,note
+0,0,4,0,0,1,1,1,uniform,0,1,1,4,0,0,default
+1,0,4,0,0,1,0,1,uniform,0,1,1,4,0,0,no terminal penalty
+2,0,5,0,0,1,0,1,uniform,0,1,1,4,0,0,n=5
+3,0,4,0,0,1,0,1,uniform,0,1,2,4,0,0,testing PPO with higher k
+4,0,4,0,0,1,0,1,uniform,0,1,1,4,1,1,no terminal penalty

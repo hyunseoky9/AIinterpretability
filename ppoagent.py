@@ -59,7 +59,7 @@ class PPOAgent:
                  n_epochs,
                  adv_normalization,
                  KL_stopping, target_KL,
-                 actor, critic):
+                 actor, critic, actorcritic):
         self.gamma = gamma
         self.gae_lambda = gae_lambda
         self.policy_clip = policy_clip
@@ -69,6 +69,8 @@ class PPOAgent:
         self.entropy_loss = entropy_loss
         self.actor = actor
         self.critic = critic
+        if actorcritic is not None:
+            self.actorcritic = actorcritic
         self.KL_stopping = KL_stopping
         self.target_KL = target_KL
         self.memory = PPOMemory(minibatch_size)
@@ -165,13 +167,14 @@ class PPOAgent:
                 states = T.tensor(state_arr[batch], dtype=T.float).to(self.actor.device)
                 old_probs = T.tensor(old_prob_arr[batch]).to(self.actor.device)
                 actions = T.tensor(action_arr[batch]).to(self.actor.device)
-                info = info_arr[batch] # info is a list of dicts, not converted to tensor
                 # calculate critic value with new network
                 critic_value = self.critic(states)
                 critic_value = T.squeeze(critic_value)
                 # calculate new log probs with new network
-                new_probs, current_entropy = self.actor.get_log_prob(states, actions, info)
+                new_probs, current_entropy = self.actor.get_log_prob(states, actions, (info_arr, batch))
                 prob_ratio = (new_probs - old_probs).exp()
+
+
                 # KL estimate
                 approx_kl = (old_probs - new_probs).mean()
                 kl_running += approx_kl.item()
@@ -195,8 +198,11 @@ class PPOAgent:
                 self.actor.optimizer.zero_grad()
                 self.critic.optimizer.zero_grad()
                 total_loss.backward()
+                T.nn.utils.clip_grad_norm_(self.actor.parameters(), 1.0)
+                T.nn.utils.clip_grad_norm_(self.critic.parameters(), 1.0)
                 self.actor.optimizer.step()
                 self.critic.optimizer.step()
+
 
                 # KL early stopping check 
                 if (self.KL_stopping) and (approx_kl.item() > self.target_KL):

@@ -1,4 +1,0 @@
-﻿ID,partial_observability,patchnum,action_portfolio,survey_is_action,dispersal_regime,terminal_penalty,limit_actions,dispersal_type,dispersal_ID,paramsetID,kR,kS,note
-0,0,4,0,0,1,1,1,uniform,0,1,1,4,default
-1,0,4,0,0,1,0,1,uniform,0,1,1,4,no terminal penalty
-2,0,5,0,0,1,0,1,uniform,0,1,1,4,n=6

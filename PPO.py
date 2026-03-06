@@ -8,11 +8,10 @@ import os
 import numpy as np
 from calc_performance3 import calc_performance
 from calc_performance3_parallel import calc_performance_parallel
-from ppo_actor import Actor_beta_dirichlet, Actor_metapop1_MDP
+from ppo_actor import Actor_metapop1_MDP
 from ppo_critic import Critic
 import random
 from FixedMeanStd import FixedMeanStd
-from RunningMeanStd import RunningMeanStd
 from torch.optim.lr_scheduler import ExponentialLR, LambdaLR, MultiStepLR, CosineAnnealingLR
 
 
@@ -67,8 +66,8 @@ class PPO():
 
         # parameters
         ## NN parameters
-        self.state_size = len(self.env.obsspace_dim) if type(self.env.obsspace_dim) == list else self.env.obsspace_dim 
-        self.action_size = len(self.env.actionspace_dim) if type(self.env.actionspace_dim) == list else self.env.actionspace_dim
+        self.state_size = self.env.obsspace_dim 
+        self.action_size = self.env.actionspace_dim
         self.actor_hidden_num = int(paramdf['actor_hidden_num']) # number of hidden layers in the actor network
         self.actor_hidden_size = eval(paramdf['actor_hidden_size']) # size of hidden layers in the actor network
         self.critic_hidden_num = int(paramdf['critic_hidden_num']) # number of hidden layers in the critic network for trunk
@@ -138,48 +137,53 @@ class PPO():
         print(f"evaluation interval: {self.evaluation_interval}, performance sampleN: {self.performance_sampleN}, parallel testing: {self.parallel_testing}, deterministic eval: {self.deterministic_eval}")
         print(f"max steps: {self.max_steps}, episodenum: {self.episodenum}")
 
-        # create networks
-        if 'Hatchery3.3.' in self.env.envID:
-            actor = Actor_beta_dirichlet(self.state_size, self.action_size+1, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
-                                        self.actor_hidden_size, self.actor_hidden_num,
-                                        self.actor_lrdecayrate, self.actor_lr,
-                                        self.actor_min_lr, self.actor_lrdecaytype, 
-                                        self.scheduler_info, self.device, self.entropy_loss_included)
-        elif 'metapop1' in self.env.envID:
-            if self.env.partial_observability == 1:
+        # create agent
+        if 'metapop1' in self.env.envID:
+            if self.env.partial_observability == 0:
                 extrainfo = {'npatches': self.env.patchnum, 'kR': self.env.kR, 'kS': self.env.kS}
                 actionsize = self.action_size
                 if self.env.kR < self.env.patchnum:
-                    extrainfo['Rheadsize'] = self.env.kR + 1 # restoration head size.
+                    extrainfo['Rheadsize'] = self.env.patchnum + 1 # restoration head size.
                     extrainfo['Rbernoulli'] = 0
                     actionsize += 1 # add 1 for STOP token when sampling
                 else:
                     extrainfo['Rheadsize'] = self.env.patchnum
                     extrainfo['Rbernoulli'] = 1
                 if self.env.kS < self.env.patchnum:
-                    extrainfo['Sheadsize'] = self.env.kS + 1 # supplementation head size
+                    extrainfo['Sheadsize'] = self.env.patchnum + 1 # supplementation head size
                     extrainfo['Sbernoulli'] = 0
                     actionsize += 1 # add 1 for STOP token when sampling
                 else: 
                     extrainfo['Sheadsize'] = self.env.patchnum
                     extrainfo['Sbernoulli'] = 1
+                if env.dim2state == 1: # use shared encoder
                 actor = Actor_metapop1_MDP(self.state_size, actionsize, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
                                             self.actor_hidden_size, self.actor_hidden_num,
                                             self.actor_lrdecayrate, self.actor_lr,
                                             self.actor_min_lr, self.actor_lrdecaytype, 
                                             self.scheduler_info, self.device, self.entropy_loss_included, extrainfo)
+                critic = Critic(self.state_size, 
+                                self.critic_hidden_size, self.critic_hidden_num,
+                                self.critic_lrdecayrate, self.critic_lr, 
+                                self.critic_min_lr, self.critic_lrdecaytype, 
+                                self.scheduler_info, self.device)
+                actorcritic = None
+                
         else: # FOR NOW just use the same actor architecture for all envs, but can change this in the future if needed
-            actor = Actor_beta_dirichlet(self.state_size, self.action_size+1, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
+            actor = Actor_metapop1_MDP(self.state_size, self.action_size+1, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
                                         self.actor_hidden_size, self.actor_hidden_num,
                                         self.actor_lrdecayrate, self.actor_lr,
                                         self.actor_min_lr, self.actor_lrdecaytype, 
                                         self.scheduler_info, self.device, self.entropy_loss_included)
 
-        critic = Critic(self.state_size, 
-                        self.critic_hidden_size, self.critic_hidden_num,
-                        self.critic_lrdecayrate, self.critic_lr, 
-                        self.critic_min_lr, self.critic_lrdecaytype, 
-                        self.scheduler_info, self.device)
+            critic = Critic(self.state_size, 
+                            self.critic_hidden_size, self.critic_hidden_num,
+                            self.critic_lrdecayrate, self.critic_lr, 
+                            self.critic_min_lr, self.critic_lrdecaytype, 
+                            self.scheduler_info, self.device)
+            
+            actorcritic = None
+            
         
         # create agent
         self.agent = PPOAgent(c1=self.c1, c2=self.c2, entropy_loss=self.entropy_loss_included,  # loss coefficients
@@ -189,7 +193,7 @@ class PPO():
                         n_epochs=self.n_epochs, # number of epochs for updating the policy
                         adv_normalization=self.advantage_normalization, # whether to normalize advantages
                         KL_stopping=self.KL_stopping, target_KL=self.target_KL, # whether to use KL stopping and the target KL value
-                        actor=actor, critic=critic) # actor and critic networks
+                        actor=actor, critic=critic, actorcritic=actorcritic) # actor and critic networks
 
         # create standarization tool
         self.rms = FixedMeanStd(env) if self.standardize else None
@@ -257,13 +261,13 @@ class PPO():
                 else:
                     inttestscore = calc_performance(self.env,self.device,self.rms,1,self.agent.actor,self.performance_sampleN,self.max_steps,self.deterministic_eval)
                 inttestscores.append(inttestscore)
-                actorpath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.parset}_dis{self.env.discset}_{self.algorithmID}_episode{i_episode}.pt"
-                criticpath = f"{self.testwd}/ValueNetwork_{self.env.envID}_par{self.env.parset}_dis{self.env.discset}_{self.algorithmID}_episode{i_episode}.pt"
+                actorpath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
+                criticpath = f"{self.testwd}/ValueNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
                 self.agent.save_models(actorpath, criticpath)
             
                 # save the running mean and sd/var as well for this episode in pickle
                 if self.standardize:
-                    with open(f"{self.testwd}/rms_{self.env.envID}_par{self.env.parset}_dis{self.env.discset}_{self.algorithmID}_episode{i_episode}.pkl", "wb") as file:
+                    with open(f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pkl", "wb") as file:
                         pickle.dump(self.rms, file)
                 
                 critic_current_lr = self.agent.critic.optimizer.param_groups[0]['lr']
@@ -278,12 +282,12 @@ class PPO():
 
         ## save best model
         bestidx = np.array(inttestscores).argmax()
-        bestfilename = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.parset}_dis{self.env.discset}_{self.algorithmID}_episode{(bestidx+1)*self.evaluation_interval}.pt"
+        bestfilename = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{(bestidx+1)*self.evaluation_interval}.pt"
         print(f'best Policy network found at episode {(bestidx+1)*self.evaluation_interval}')
-        shutil.copy(bestfilename, f"{self.testwd}/bestPolicyNetwork_{self.env.envID}_par{self.env.parset}_dis{self.env.discset}_{self.algorithmID}.pt")
+        shutil.copy(bestfilename, f"{self.testwd}/bestPolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.pt")
 
         ## save performance
-        np.save(f"{self.testwd}/rewards_{self.env.envID}_par{self.env.parset}_dis{self.env.discset}_{self.algorithmID}.npy", inttestscores)
+        np.save(f"{self.testwd}/rewards_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.npy", inttestscores)
 
         ## lastly save the configuration.
         param_file_path = os.path.join(self.testwd, f"config.txt")
