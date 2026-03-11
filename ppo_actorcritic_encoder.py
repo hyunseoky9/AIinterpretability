@@ -49,10 +49,15 @@ class ActorCritic_metapop1_MDP(nn.Module):
 
         self.R_head = nn.Linear(actor_hidden_size[-1], 1)
         self.S_head = nn.Linear(actor_hidden_size[-1], 1)
+        #nn.init.constant_(self.R_head.bias, -2.0)
+        #nn.init.constant_(self.S_head.bias, -2.0)
         if self.Rbernoulli == 0:
             self.R_stop = nn.Linear(encoder_output_dims, 1)
+            #nn.init.constant_(self.R_stop.bias, 2.0)  # ADD THIS LINE - favor "do nothing" for restoration
         if self.Sbernoulli == 0:
             self.S_stop = nn.Linear(encoder_output_dims, 1)
+            #nn.init.constant_(self.S_stop.bias, 2.0)  # ADD THIS LINE - favor "do nothing" for supplementation
+
 
         # build the critic model
         layers = [nn.Linear(encoder_output_dims, critic_hidden_size[0]), nn.ReLU()]

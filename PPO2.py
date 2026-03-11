@@ -103,6 +103,10 @@ class PPO2():
         ## loss coefficients 
         self.c1 = float(paramdf['c1']) # coefficient for value function loss
         self.c2 = float(paramdf['c2']) # coefficient for entropy bonus
+        self.c2scheduler_info = eval(paramdf['c2anneal'])
+        if self.c2scheduler_info is not None:
+            if self.c2scheduler_info['type'] == 'linear':
+                self.c2 = self.c2scheduler_info['start'] # initialize c2 to the starting value for annealing
         self.entropy_loss_included = bool(int(paramdf['entropy_loss_included'])) # whether to include entropy loss in the total loss
         self.policy_clip = float(paramdf['policy_clip']) # clipping parameter for PPO
         self.KL_stopping= bool(int(paramdf['KL_stopping'])) # whether to use KL divergence stopping criterion
@@ -217,6 +221,8 @@ class PPO2():
                 self.agent.remember(observation, action, prob, val, reward, done, ainfo)
                 if n_steps % self.rolloutlen == 0:
                     actor_loss, critic_loss, entropy = self.agent.learn()
+                    if self.c2scheduler_info is not None:
+                        self.agent.c2 = self.c2scheduler_info['end'] + (self.c2scheduler_info['start'] - self.c2scheduler_info['end'])* (1 - i_episode/self.episodenum)
                     if not self.did_first_update:
                         self.did_first_update = True
                     # step the learning rate schedulers if using exponential decay
