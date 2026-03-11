@@ -221,7 +221,7 @@ class PPO2():
                 self.agent.remember(observation, action, prob, val, reward, done, ainfo)
                 if n_steps % self.rolloutlen == 0:
                     actor_loss, critic_loss, entropy = self.agent.learn()
-                    if self.c2scheduler_info is not None:
+                    if self.c2scheduler_info['type'] is not None:
                         self.agent.c2 = self.c2scheduler_info['end'] + (self.c2scheduler_info['start'] - self.c2scheduler_info['end'])* (1 - i_episode/self.episodenum)
                     if not self.did_first_update:
                         self.did_first_update = True
