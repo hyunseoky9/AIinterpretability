@@ -51,7 +51,7 @@ class PPOMemory:
         self.dones = []
         self.info = []
 
-class PPOAgent:
+class PPOAgent2:
     def __init__(self, c1, c2, entropy_loss, 
                  minibatch_size,
                  policy_clip,
@@ -59,7 +59,7 @@ class PPOAgent:
                  n_epochs,
                  adv_normalization,
                  KL_stopping, target_KL,
-                 actor, critic):
+                 actorcritic):
         self.gamma = gamma
         self.gae_lambda = gae_lambda
         self.policy_clip = policy_clip
@@ -67,8 +67,7 @@ class PPOAgent:
         self.c1 = c1
         self.c2 = c2
         self.entropy_loss = entropy_loss
-        self.actor = actor
-        self.critic = critic
+        self.actorcritic = actorcritic
         self.KL_stopping = KL_stopping
         self.target_KL = target_KL
         self.memory = PPOMemory(minibatch_size)
@@ -80,15 +79,13 @@ class PPOAgent:
     def save_checkpoint(self, network,path):
         T.save(network, path)
 
-    def save_models(self,actorpath,criticpath):
-        self.save_checkpoint(self.actor, actorpath)
-        #self.save_checkpoint(self.critic, criticpath)
+    def save_models(self,path):
+        self.save_checkpoint(self.actorcritic, path)
 
     def choose_action(self, observation):
-        state = T.tensor(observation, dtype=T.float).unsqueeze(0).to(self.actor.device)
+        state = T.tensor(observation, dtype=T.float).unsqueeze(0).to(self.actorcritic.device)
         
-        action, logprob, info = self.actor.getaction(state)
-        value = self.critic(state)
+        action, logprob, value, info = self.actorcritic.getaction(state, withvalue=True)
     
         probs = T.squeeze(logprob).item()
         action = T.squeeze(action).cpu().detach().numpy()
@@ -134,6 +131,12 @@ class PPOAgent:
         return advantages, returns
 
     def learn(self):
+        # keep track of losses for logging
+        actor_loss_sum = 0.0
+        critic_loss_sum = 0.0
+        entropy_sum = 0.0
+        n_minibatches = 0
+
         for _ in range(self.n_epochs):
             state_arr, action_arr, old_prob_arr, vals_arr,\
             reward_arr, done_arr, info_arr, batches = \
@@ -143,15 +146,6 @@ class PPOAgent:
             last_value = 0
             advantages, returns = self.compute_gae_1d(reward_arr,values,done_arr,
                                                       self.gamma,self.gae_lambda,last_value)
-            #advantage = np.zeros(len(reward_arr), dtype=np.float32)
-            #for t in range(len(reward_arr)- 1):
-            #    discount = 1
-            #    a_t = 0
-            #    for k in range(t, len(reward_arr) - 1):
-            #        a_t += discount * (reward_arr[k] + self.gamma * values[k+1] * (1 - int(done_arr[k])) - values[k])
-            #        discount *= self.gamma * self.gae_lambda
-            #    advantage[t] = a_t
-            #advantage = T.tensor(advantage).to(self.actor.device)
             # Advantage normalization (once per epoch, before minibatches)
             if self.adv_normalization:
                 advantages = (advantages - advantages.mean()) / (advantages.std(ddof=0) + 1e-10)
@@ -159,27 +153,27 @@ class PPOAgent:
             kl_running = 0.0
             kl_count = 0
             stop_early = False
-
             for batch in batches:
                 # convert batch data to tensors
-                states = T.tensor(state_arr[batch], dtype=T.float).to(self.actor.device)
-                old_probs = T.tensor(old_prob_arr[batch]).to(self.actor.device)
-                actions = T.tensor(action_arr[batch]).to(self.actor.device)
+                states = T.tensor(state_arr[batch], dtype=T.float).to(self.actorcritic.device)
+                old_probs = T.tensor(old_prob_arr[batch]).to(self.actorcritic.device)
+                actions = T.tensor(action_arr[batch]).to(self.actorcritic.device)
+                # encode states with new network
+                encoded_state, global_pool = self.actorcritic.encode(states)
                 # calculate critic value with new network
-                critic_value = self.critic(states)
+                critic_value = self.actorcritic.critic_forward(global_pool)
                 critic_value = T.squeeze(critic_value)
                 # calculate new log probs with new network
-                new_probs, current_entropy = self.actor.get_log_prob(states, actions, (info_arr, batch))
+                new_probs, current_entropy = self.actorcritic.get_log_prob(encoded_state, global_pool, actions, (info_arr, batch))
                 prob_ratio = (new_probs - old_probs).exp()
-
 
                 # KL estimate
                 approx_kl = (old_probs - new_probs).mean()
                 kl_running += approx_kl.item()
                 kl_count += 1
                 # get advantages and returns for the minibatch and convert to tensors
-                advantage = T.tensor(advantages[batch], dtype=T.float, device=self.actor.device)
-                returns_t = T.tensor(returns[batch], dtype=T.float, device=self.actor.device)
+                advantage = T.tensor(advantages[batch], dtype=T.float, device=self.actorcritic.device)
+                returns_t = T.tensor(returns[batch], dtype=T.float, device=self.actorcritic.device)
                 # calculate actor loss
                 weighted_probs = advantage * prob_ratio
                 weighted_clipped_probs = T.clamp(prob_ratio, 1 - self.policy_clip, 1 + self.policy_clip) * advantage
@@ -192,14 +186,17 @@ class PPOAgent:
                 if self.entropy_loss:
                     entropy_loss = -self.c2 * current_entropy.mean()
                     total_loss += entropy_loss
+                # accumulate losses for logging
+                actor_loss_sum += actor_loss.item()
+                critic_loss_sum += critic_loss.item()
+                entropy_sum += current_entropy.mean().item()
+                n_minibatches += 1
+
                 # take a gradient step
-                self.actor.optimizer.zero_grad()
-                self.critic.optimizer.zero_grad()
+                self.actorcritic.optimizer.zero_grad()
                 total_loss.backward()
-                T.nn.utils.clip_grad_norm_(self.actor.parameters(), 1.0)
-                T.nn.utils.clip_grad_norm_(self.critic.parameters(), 1.0)
-                self.actor.optimizer.step()
-                self.critic.optimizer.step()
+                T.nn.utils.clip_grad_norm_(self.actorcritic.parameters(), 1.0)
+                self.actorcritic.optimizer.step()
 
 
                 # KL early stopping check 
@@ -208,6 +205,12 @@ class PPOAgent:
                     break
             if stop_early:
                 break
+        mean_actor_loss = actor_loss_sum / max(n_minibatches, 1)
+        mean_critic_loss = critic_loss_sum / max(n_minibatches, 1)
+        mean_entropy = entropy_sum / max(n_minibatches, 1)
+
+
 
 
         self.memory.clear_memory() # clear memory after learning is done before next round of data collection
+        return mean_actor_loss, mean_critic_loss, mean_entropy

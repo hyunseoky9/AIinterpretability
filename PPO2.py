@@ -1,6 +1,7 @@
+import pandas as pd
 import pickle
 import numpy
-from ppoagent import PPOAgent
+from ppoagent2 import PPOAgent2
 from setup_logger import setup_logger
 import shutil
 import torch
@@ -8,22 +9,21 @@ import os
 import numpy as np
 from calc_performance3 import calc_performance
 from calc_performance3_parallel import calc_performance_parallel
-from ppo_actor import Actor_metapop1_MDP
-from ppo_critic import Critic
+from ppo_actorcritic_encoder import ActorCritic_metapop1_MDP
 import random
 from FixedMeanStd import FixedMeanStd
 from torch.optim.lr_scheduler import ExponentialLR, LambdaLR, MultiStepLR, CosineAnnealingLR
 
 
-class PPO():
+class PPO2():
     def __init__(self, env, paramdf, meta):
         """
-        PPO agent.
+        PPO that uses an agent with a shared network for actor and critic
         env: Environment object
         paramdf: DataFrame containing hyperparameters for the agent
         meta: metadata (paramid, iteration, seed) for logging and saving results
         """
-        self.algorithmID = 'PPO'
+        self.algorithmID = 'PPO2'
         self.paramdf = paramdf
         # define parameters
         ## env setup
@@ -68,10 +68,14 @@ class PPO():
         ## NN parameters
         self.state_size = self.env.obsspace_dim 
         self.action_size = self.env.actionspace_dim
-        self.actor_hidden_num = int(paramdf['actor_hidden_num']) # number of hidden layers in the actor network
-        self.actor_hidden_size = eval(paramdf['actor_hidden_size']) # size of hidden layers in the actor network
-        self.critic_hidden_num = int(paramdf['critic_hidden_num']) # number of hidden layers in the critic network for trunk
-        self.critic_hidden_size = eval(paramdf['critic_hidden_size']) # size of hidden layers in the critic network for trunk
+
+        self.encoder_hidden_num = int(paramdf['encoder_hidden_num']) # number of hidden layers in the encoder network (if using shared actor-critic architecture with an encoder
+        self.encoder_hidden_size = eval(paramdf['encoder_hidden_size']) # size of hidden layers in the encoder network (if using shared actor-critic architecture with an encoder
+        self.encoder_output_size = int(paramdf['encoder_output_size']) # output size of the encoder network (if using shared actor-critic architecture with an encoder
+        self.actor_hidden_num = int(paramdf['actor_hidden_num']) # number of hidden layers in the actor trunk 
+        self.actor_hidden_size = eval(paramdf['actor_hidden_size']) # size of hidden layers in the actor trunk
+        self.critic_hidden_num = int(paramdf['critic_hidden_num']) # number of hidden layers in the critic trunk
+        self.critic_hidden_size = eval(paramdf['critic_hidden_size']) # size of hidden layers in the critic trunk
 
         ## training parameters
         self.advantage_normalization = bool(int(paramdf['advantage_normalization'])) # whether to normalize advantages
@@ -84,18 +88,13 @@ class PPO():
         ## learning rates
         self.actor_lr = float(paramdf['actor_lr']) # learning rate for actor network
         self.critic_lr = float(paramdf['critic_lr']) # learning rate for critic network
-        self.actor_lrdecayrate = float(paramdf['actor_lrdecay']) # learning rate decay rate for actor network
-        self.critic_lrdecayrate = float(paramdf['critic_lrdecay']) # learning rate decay rate for critic network
-        if paramdf['actor_minlr'] == 'inf':
-            self.actor_min_lr = float('-inf') # minimum learning rate for actor network
+        self.encoder_lr = float(paramdf['encoder_lr']) # learning rate for encoder network (if using shared actor-critic architecture with an encoder)
+        self.lrdecayrate = float(paramdf['lrdecay']) # learning rate decay rate for actor network
+        if paramdf['minlr'] == 'inf':
+            self.min_lr = float('-inf') # minimum learning rate for actor network
         else:
-            self.actor_min_lr = float(paramdf['actor_minlr'])
-        if paramdf['critic_minlr'] == 'inf':
-            self.critic_min_lr = float('-inf') # minimum learning rate for critic network
-        else:
-            self.critic_min_lr = float(paramdf['critic_minlr'])
-        self.actor_lrdecaytype = paramdf['actor_lrdecaytype'] # learning rate decay type for actor network
-        self.critic_lrdecaytype = paramdf['critic_lrdecaytype'] # learning rate decay type for critic network
+            self.min_lr = float(paramdf['minlr'])
+        self.lrdecaytype = paramdf['lrdecaytype'] # learning rate decay type for actor network
         self.scheduler_info = eval(paramdf['scheduler_info'])
 
         ## standardize
@@ -126,8 +125,9 @@ class PPO():
         print(f"state size: {self.state_size}, action size: {self.action_size}")
         print(f"actor: hidden num: {self.actor_hidden_num}, hidden size: {self.actor_hidden_size}")
         print(f"critic: hidden num: {self.critic_hidden_num}, hidden size: {self.critic_hidden_size}")
-        print(f"actor lr: {self.actor_lr}, actor lr decay rate: {self.actor_lrdecayrate}, actor min lr: {self.actor_min_lr}")
-        print(f"critic lr: {self.critic_lr}, critic lr decay rate: {self.critic_lrdecayrate}, critic min lr: {self.critic_min_lr}")
+        print(f"encoder: hidden num: {self.encoder_hidden_num}, hidden size: {self.encoder_hidden_size}, encoder output size: {self.encoder_output_size}")
+        print(f"actor lr: {self.actor_lr}, critic lr: {self.critic_lr}, encoder lr: {self.encoder_lr}")
+        print(f"lr decay type: {self.lrdecaytype}, lr decay rate: {self.lrdecayrate}, min lr: {self.min_lr}")
         print(f"standardize: {self.standardize}")
         print(f"gamma: {self.gamma}, gae_lambda: {self.gae_lambda}")
         print(f'advantage normalization: {self.advantage_normalization}')
@@ -156,50 +156,25 @@ class PPO():
                 else: 
                     extrainfo['Sheadsize'] = self.env.patchnum
                     extrainfo['Sbernoulli'] = 1
-                actor = Actor_metapop1_MDP(self.state_size, actionsize, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
+                actorcritic = ActorCritic_metapop1_MDP(self.state_size, 
                                             self.actor_hidden_size, self.actor_hidden_num,
-                                            self.actor_lrdecayrate, self.actor_lr,
-                                            self.actor_min_lr, self.actor_lrdecaytype, 
+                                            self.critic_hidden_size, self.critic_hidden_num,
+                                            self.encoder_hidden_size, self.encoder_hidden_num, self.encoder_output_size,
+                                            self.actor_lr, self.critic_lr, self.encoder_lr,
+                                            self.min_lr, self.lrdecaytype, self.lrdecayrate,
                                             self.scheduler_info, self.device, self.entropy_loss_included, extrainfo)
-                critic = Critic(self.state_size, 
-                                self.critic_hidden_size, self.critic_hidden_num,
-                                self.critic_lrdecayrate, self.critic_lr, 
-                                self.critic_min_lr, self.critic_lrdecaytype, 
-                                self.scheduler_info, self.device)
                 # create agent
-                self.agent = PPOAgent(c1=self.c1, c2=self.c2, entropy_loss=self.entropy_loss_included,  # loss coefficients
+                self.agent = PPOAgent2(c1=self.c1, c2=self.c2, entropy_loss=self.entropy_loss_included,  # loss coefficients
                                 minibatch_size=self.minibatch_size,  # minibactch size
                                 policy_clip=self.policy_clip, # PPO clipping parameter
                                 gamma=self.gamma, gae_lambda=self.gae_lambda, # discount factor and GAE lambda
                                 n_epochs=self.n_epochs, # number of epochs for updating the policy
                                 adv_normalization=self.advantage_normalization, # whether to normalize advantages
                                 KL_stopping=self.KL_stopping, target_KL=self.target_KL, # whether to use KL stopping and the target KL value
-                                actor=actor, critic=critic) # actor and critic networks
+                                actorcritic=actorcritic) # actor and critic networks
                 
         else: # FOR NOW just use the same actor architecture for all envs, but can change this in the future if needed
-            actor = Actor_metapop1_MDP(self.state_size, self.action_size+1, # add 1 for the beta parameter, which is the first output, and the rest are for the dirichlet distribution (total of 5 outputs for 4 actions)
-                                        self.actor_hidden_size, self.actor_hidden_num,
-                                        self.actor_lrdecayrate, self.actor_lr,
-                                        self.actor_min_lr, self.actor_lrdecaytype, 
-                                        self.scheduler_info, self.device, self.entropy_loss_included)
-
-            critic = Critic(self.state_size, 
-                            self.critic_hidden_size, self.critic_hidden_num,
-                            self.critic_lrdecayrate, self.critic_lr, 
-                            self.critic_min_lr, self.critic_lrdecaytype, 
-                            self.scheduler_info, self.device)
-
-            # create agent
-            self.agent = PPOAgent(c1=self.c1, c2=self.c2, entropy_loss=self.entropy_loss_included,  # loss coefficients
-                            minibatch_size=self.minibatch_size,  # minibactch size
-                            policy_clip=self.policy_clip, # PPO clipping parameter
-                            gamma=self.gamma, gae_lambda=self.gae_lambda, # discount factor and GAE lambda
-                            n_epochs=self.n_epochs, # number of epochs for updating the policy
-                            adv_normalization=self.advantage_normalization, # whether to normalize advantages
-                            KL_stopping=self.KL_stopping, target_KL=self.target_KL, # whether to use KL stopping and the target KL value
-                            actor=actor, critic=critic) # actor and critic networks
-
-            actorcritic = None
+            raise ValueError("Following environment is not found.")
             
         
 
@@ -211,11 +186,16 @@ class PPO():
     def train(self):
         best_score = 0
         score_history = []
+
         self.did_first_update = False # flag to indicate if the first update has been done, used for learning rate scheduler stepping
         learn_iters = 0
         avg_score = 0
         n_steps = 0
         inttestscores = [] # interval test scores
+        actorlosses = []
+        criticlosses = []
+        entropies = []
+        episodes = []
         for i_episode in range(1, self.episodenum + 1):
             observation = self.env.reset()
             done = False
@@ -236,14 +216,12 @@ class PPO():
                 score += reward
                 self.agent.remember(observation, action, prob, val, reward, done, ainfo)
                 if n_steps % self.rolloutlen == 0:
-                    self.agent.learn()
+                    actor_loss, critic_loss, entropy = self.agent.learn()
                     if not self.did_first_update:
                         self.did_first_update = True
                     # step the learning rate schedulers if using exponential decay
-                    if isinstance(self.agent.actor.scheduler, ExponentialLR):
-                        self.agent.actor.scheduler.step() # Decay the learning rate
-                    if isinstance(self.agent.critic.scheduler, ExponentialLR):
-                        self.agent.critic.scheduler.step() # Decay the learning rate
+                    if isinstance(self.agent.actorcritic.scheduler, ExponentialLR):
+                        self.agent.actorcritic.scheduler.step() # Decay the learning rate
                     learn_iters += 1
                 episteps += 1
                 if episteps >= self.max_steps:
@@ -253,10 +231,8 @@ class PPO():
 
             # step the learning rate schedulers if using multistep or cosine annealing
             if self.did_first_update:
-                if isinstance(self.agent.actor.scheduler, (MultiStepLR, CosineAnnealingLR)):
-                    self.agent.actor.scheduler.step()
-                if isinstance(self.agent.critic.scheduler, (MultiStepLR, CosineAnnealingLR)):
-                    self.agent.critic.scheduler.step()
+                if isinstance(self.agent.actorcritic.scheduler, (MultiStepLR, CosineAnnealingLR)):
+                    self.agent.actorcritic.scheduler.step()
 
             # print out episode information every interval
             if i_episode % 500 == 0:
@@ -265,34 +241,42 @@ class PPO():
             # evaluate at every specified interval episodes
             if i_episode % self.evaluation_interval == 0: 
                 if self.parallel_testing:
-                    inttestscore = calc_performance_parallel(self.env, self.device, self.seed, self.paramdf['envconfig'], self.rms, 1, self.agent.actor, self.performance_sampleN, self.max_steps, self.deterministic_eval)
+                    inttestscore = calc_performance_parallel(self.env, self.device, self.seed, self.paramdf['envconfig'], self.rms, 1, self.agent.actorcritic, self.performance_sampleN, self.max_steps, self.deterministic_eval)
                 else:
-                    inttestscore = calc_performance(self.env,self.device,self.rms,1,self.agent.actor,self.performance_sampleN,self.max_steps,self.deterministic_eval)
+                    inttestscore = calc_performance(self.env,self.device,self.rms,1,self.agent.actorcritic,self.performance_sampleN,self.max_steps,self.deterministic_eval)
                 inttestscores.append(inttestscore)
-                actorpath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
-                criticpath = f"{self.testwd}/ValueNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
-                self.agent.save_models(actorpath, criticpath)
-            
+                savepath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
+                self.agent.save_models(savepath)
                 # save the running mean and sd/var as well for this episode in pickle
                 if self.standardize:
                     with open(f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pkl", "wb") as file:
                         pickle.dump(self.rms, file)
                 
-                critic_current_lr = self.agent.critic.optimizer.param_groups[0]['lr']
-                actor_current_lr = self.agent.actor.optimizer.param_groups[0]['lr']
-                print(f"Episode {i_episode}, Learning Rate: A{np.round(actor_current_lr, 6)}/C{np.round(critic_current_lr, 6)} Avg Performance: {inttestscore:.2f}")
+                encoder_current_lr = self.agent.actorcritic.optimizer.param_groups[0]['lr']    
+                actor_current_lr = self.agent.actorcritic.optimizer.param_groups[1]['lr']
+                critic_current_lr = self.agent.actorcritic.optimizer.param_groups[2]['lr']
+
+                print(f"Episode {i_episode},LR: A{np.round(actor_current_lr, 6)}/C{np.round(critic_current_lr, 6)}/E{np.round(encoder_current_lr, 6)} Avg Performance: {inttestscore:.2f}")
+                print(f"Actor Loss: {actor_loss:.4f}, Critic Loss: {critic_loss:.4f}, Entropy: {entropy:.4f}")
                 print('-----------------------------------')
+                actorlosses.append(actor_loss)
+                criticlosses.append(critic_loss)
+                entropies.append(entropy)
+                episodes.append(i_episode)
+
 
             #if avg_score > best_score:
             #    best_score = avg_score
             #    print(f"(New best avg (last 100 epi's) score: {best_score:.1f} at episode {i_episode})")
-
 
         ## save best model
         bestidx = np.array(inttestscores).argmax()
         bestfilename = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{(bestidx+1)*self.evaluation_interval}.pt"
         print(f'best Policy network found at episode {(bestidx+1)*self.evaluation_interval}')
         shutil.copy(bestfilename, f"{self.testwd}/bestPolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.pt")
+        bestrmsfilename = f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{(bestidx+1)*self.evaluation_interval}.pkl"
+        shutil.copy(bestrmsfilename, f"{self.testwd}/bestPolicyrms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.pkl")
+
 
         ## save performance
         np.save(f"{self.testwd}/rewards_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.npy", inttestscores)
@@ -304,7 +288,19 @@ class PPO():
                 param_file.write(f"{key}: {value}\n")
         sorted_scores = np.sort(inttestscores)[::-1]
 
+        training_info = {
+            'episodes': episodes,
+            'scores': inttestscores,
+            'sorted_scores': sorted_scores,
+            'actor_losses': actorlosses,
+            'critic_losses': criticlosses,
+            'entropies': entropies,
+        }
+        # into a pd 
+        training_info_df = pd.DataFrame(training_info)
+        training_info_df.to_csv(f"{self.testwd}/training_info_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.csv", index=False)
+
         print("Training completed.")
         
-        return self.agent.actor, sorted_scores
+        return self.agent.actorcritic, sorted_scores,training_info
     

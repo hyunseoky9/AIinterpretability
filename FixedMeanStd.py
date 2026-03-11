@@ -5,6 +5,7 @@ class FixedMeanStd:
         self.envID = env.envID
         if env.envID == 'metapop1':
             self.T = env.T
+            self.dim2state = env.dim2state
         self.stored_batch = []
         self.rolloutnum = 0
         self.updateN = 1000 # Number of samples to collect before updating the mean and variance
@@ -17,7 +18,10 @@ class FixedMeanStd:
         # check if there is a variable self.envID
         y = np.asarray(x, dtype=np.float32).copy()
         if 'metapop1' in self.envID: 
-            y[-1] =  y[-1] /self.T # only normalize time variable for metapop1
+            if self.dim2state:
+                y[:,-1] =  y[:,-1] /self.T # only normalize time variable for metapop1
+            else:
+                y[-1] =  y[-1] /self.T # only normalize time variable for metapop1
             return y
         else:
             return (y - self.mean) / np.sqrt(self.var + 1e-8)

@@ -1,4 +1,6 @@
-dispersal_weights/
 value_iteration/
 PPO_results/
+human_play_results/
+performance_summary/
+results/
 *.pyc

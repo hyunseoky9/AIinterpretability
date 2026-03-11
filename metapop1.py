@@ -56,6 +56,8 @@ class metapop1:
         self.L = paramset['L'].iloc[self.paramsetID] # terminal penalty per extinct patch.
         self.T = paramset['T'].iloc[self.paramsetID] # time horizon
         self.B = paramset['B'].iloc[self.paramsetID] # budget. number of surveys that can be taken.
+        self.cr = paramset['cr'].iloc[self.paramsetID] # cost of restoration
+        self.cs = paramset['cs'].iloc[self.paramsetID] # cost of supplementation
         if self.dispersaltype == 'uniform':
             with open(f'./dispersal_weights/uniform_dispersal_weights_patchnum{self.patchnum}.pkl', 'rb') as f:
                 weights_collection = pickle.load(f)
@@ -65,9 +67,6 @@ class metapop1:
                 weights_collection = pickle.load(f)
             self.w = weights_collection
         
-        ## set cost of actions a function of patch number
-        self.cr = 1/self.patchnum # cost of restoration
-        self.cs = 1/self.patchnum # cost of supplementation
 
         # set dimensions
         ## state variables: S = occupancy state, H = habitat quality, M = survey mark, Z = dispersal regime
@@ -259,7 +258,13 @@ class metapop1:
             done = True
         else:           
             done = False
-
+        info['connectivity'] = connectivity
+        info['extinction_prob'] = eprob
+        info['colonization_prob'] = cprob
+        info['occupied_fraction'] = np.mean(X_next)
+        info['goodhabitat_fraction'] = np.mean(H_next)
+        info['total_cost'] = self.cr * np.sum(aR) + self.cs * np.sum(aS)
+        info['total_benefit'] = 1/self.patchnum * np.sum(X_next)
         return self.obs, reward, done, info
 
     def change_to_2D(self, connectivity=None, Z_next=None, t=None):
