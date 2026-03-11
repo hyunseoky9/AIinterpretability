@@ -104,7 +104,7 @@ class PPO2():
         self.c1 = float(paramdf['c1']) # coefficient for value function loss
         self.c2 = float(paramdf['c2']) # coefficient for entropy bonus
         self.c2scheduler_info = eval(paramdf['c2anneal'])
-        if self.c2scheduler_info is not None:
+        if self.c2scheduler_info['type'] is not None:
             if self.c2scheduler_info['type'] == 'linear':
                 self.c2 = self.c2scheduler_info['start'] # initialize c2 to the starting value for annealing
         self.entropy_loss_included = bool(int(paramdf['entropy_loss_included'])) # whether to include entropy loss in the total loss
