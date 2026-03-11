@@ -31,7 +31,7 @@ evaluation_interval,100,100,100,100,100,100,100,100,100,100,100,100,100,200,200,
 deterministic_eval,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 standardize,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 max_steps,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100
-episodenum,3000,3000,3000,4000,5000,4000,5000,4000,5000,4000,4000,4000,4000,6000,6000,6000,6000,6000
+episodenum,3000,3000,3000,4000,5000,4000,5000,4000,5000,4000,4000,4000,4000,6000,6000,6000,6000,8000
 envid,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1,metapop1
 envconfig,{'settingID':4},{'settingID':7},{'settingID':8},{'settingID':11},{'settingID':11},{'settingID':12},{'settingID':12},{'settingID':14},{'settingID':14},{'settingID':15},{'settingID':16},{'settingID':18},{'settingID':18},{'settingID':18},{'settingID':18},{'settingID':18},{'settingID':18},{'settingID':18}
 seed,random,random,random,random,random,random,random,random,random,random,random,random,random,random,random,random,random,random
