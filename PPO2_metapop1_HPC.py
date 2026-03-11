@@ -6,7 +6,7 @@ import pandas as pd
 import random
 if __name__ == "__main__":
     paramid = int(sys.argv[1])
-    iteration_num = 2
+    iteration_num = 1000
     hyperparameterization_set_filename = './hyperparamsets/PPO2hyperparamsets.csv'
     paramdflist = call_paramset(hyperparameterization_set_filename,paramid)
     tuneset = 1
