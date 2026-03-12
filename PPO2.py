@@ -251,12 +251,15 @@ class PPO2():
                 else:
                     inttestscore = calc_performance(self.env,self.device,self.rms,1,self.agent.actorcritic,self.performance_sampleN,self.max_steps,self.deterministic_eval)
                 inttestscores.append(inttestscore)
-                savepath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
-                self.agent.save_models(savepath)
-                # save the running mean and sd/var as well for this episode in pickle
-                if self.standardize:
-                    with open(f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pkl", "wb") as file:
-                        pickle.dump(self.rms, file)
+                if inttestscore > best_score:
+                    savepath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
+                    best_score_epi = i_episode
+                    best_score = inttestscore
+                    self.agent.save_models(savepath)
+                    # save the running mean and sd/var as well for this episode in pickle
+                    if self.standardize:
+                        with open(f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pkl", "wb") as file:
+                            pickle.dump(self.rms, file)
                 
                 encoder_current_lr = self.agent.actorcritic.optimizer.param_groups[0]['lr']    
                 actor_current_lr = self.agent.actorcritic.optimizer.param_groups[1]['lr']
@@ -264,23 +267,23 @@ class PPO2():
 
                 print(f"Episode {i_episode},LR: A{np.round(actor_current_lr, 6)}/C{np.round(critic_current_lr, 6)}/E{np.round(encoder_current_lr, 6)} Avg Performance: {inttestscore:.2f}")
                 print(f"Actor Loss: {actor_loss:.4f}, Critic Loss: {critic_loss:.4f}, Entropy: {entropy:.4f}")
+                print(f"best score so far: {best_score:.5f}")
                 print('-----------------------------------')
                 actorlosses.append(actor_loss)
                 criticlosses.append(critic_loss)
                 entropies.append(entropy)
                 episodes.append(i_episode)
-
-
-            #if avg_score > best_score:
-            #    best_score = avg_score
-            #    print(f"(New best avg (last 100 epi's) score: {best_score:.1f} at episode {i_episode})")
+                killtraining = self.killrule(best_score, i_episode)
+                if killtraining:
+                    print(f"Kill rule triggered at episode {i_episode}, stopping training.")
+                    break
 
         ## save best model
         bestidx = np.array(inttestscores).argmax()
-        bestfilename = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{(bestidx+1)*self.evaluation_interval}.pt"
-        print(f'best Policy network found at episode {(bestidx+1)*self.evaluation_interval}')
+        bestfilename = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{best_score_epi}.pt"
+        print(f'best Policy network found at episode {best_score_epi}')
         shutil.copy(bestfilename, f"{self.testwd}/bestPolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.pt")
-        bestrmsfilename = f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{(bestidx+1)*self.evaluation_interval}.pkl"
+        bestrmsfilename = f"{self.testwd}/rms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{best_score_epi}.pkl"
         shutil.copy(bestrmsfilename, f"{self.testwd}/bestPolicyrms_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}.pkl")
 
 
@@ -310,3 +313,12 @@ class PPO2():
         
         return self.agent.actorcritic, sorted_scores,training_info
     
+    def killrule(self, best_score, i_episode):
+        if self.env.envID == 'metapop1':
+            if best_score < 6 and i_episode > 18000: # if the performance is already very good, stop training to save compute
+                print(f"Kill rule triggered")
+                return True
+            if best_score < 6.1 and i_episode > 30000: # if the performance is already very good, stop training to save compute
+                print(f"Kill rule triggered")
+                return True
+        return False
