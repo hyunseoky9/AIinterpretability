@@ -255,7 +255,7 @@ class PPO2():
                 print(f"Episode {i_episode}")
 
             # evaluate at every specified interval episodes
-            if i_episode % self.evaluation_interval == 0: 
+            if i_episode % self.evaluation_interval == 0 and i_episode >= 10000: 
                 if self.parallel_testing:
                     inttestscore = calc_performance_parallel(self.env, self.device, self.seed, self.paramdf['envconfig'], self.rms, 1, self.agent.actorcritic, self.performance_sampleN, self.max_steps, self.deterministic_eval)
                 else:
