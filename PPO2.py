@@ -327,7 +327,7 @@ class PPO2():
     
     def killrule(self, best_score, i_episode):
         if self.env.envID == 'metapop1':
-            if best_score < 5.5 and i_episode > 40000: # if the performance is already very good, stop training to save compute
+            if best_score < 5.3 and i_episode > 40000: # if the performance is already very good, stop training to save compute
                 print(f"Kill rule triggered")
                 return True
             if best_score < 5.5 and i_episode > 100000: # if the performance is already very good, stop training to save compute
