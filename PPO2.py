@@ -221,8 +221,6 @@ class PPO2():
                 self.agent.remember(observation, action, prob, val, reward, done, ainfo)
                 if n_steps % self.rolloutlen == 0:
                     actor_loss, critic_loss, entropy = self.agent.learn()
-                    if self.c2scheduler_info['type'] is not None:
-                        self.agent.c2 = self.c2scheduler_info['end'] + (self.c2scheduler_info['start'] - self.c2scheduler_info['end'])* (1 - i_episode/self.episodenum)
                     if not self.did_first_update:
                         self.did_first_update = True
                     # step the learning rate schedulers if using exponential decay
@@ -234,6 +232,18 @@ class PPO2():
                     break
             score_history.append(score)
             avg_score = np.mean(score_history[-100:])
+            # c2 annealing
+            if self.c2scheduler_info['type'] is not None:
+                if self.c2scheduler_info['type'] == 'linear':
+                    self.agent.c2 = self.c2scheduler_info['end'] + (self.c2scheduler_info['start'] - self.c2scheduler_info['end'])* (1 - i_episode/self.episodenum)
+                elif self.c2scheduler_info['type'] == 'step':
+                    if len(self.c2scheduler_info['milestone']) > 0 and i_episode == self.c2scheduler_info['milestone'][0]:
+                        self.agent.c2 = self.c2scheduler_info['newc2'][0]
+                        self.c2scheduler_info['milestone'].pop(0)  # pop the milestone and newc2 so that the next step will be at the next milestone
+                        self.c2scheduler_info['newc2'].pop(0)
+                    
+
+
 
             # step the learning rate schedulers if using multistep or cosine annealing
             if self.did_first_update:

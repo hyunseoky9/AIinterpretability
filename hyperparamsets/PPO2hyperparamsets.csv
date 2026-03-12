@@ -16,7 +16,7 @@ critic_hidden_size,"[128,128]","[128,128]","[128,128]","[128,128]","[128,128]","
 advantage_normalization,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 c1,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5
 c2,0,0,0,0,0.001,0,0.001,0,0.001,0,0,0,0,0.001,0.003,0.003,0.005,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003
-c2anneal,{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},"{'type':'linear', 'start': 0.03,'end': 0.0001}"
+c2anneal,{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},{'type':None},"{'type':'step', 'milestone': [20000],'newc2': [0.0001]}"
 entropy_loss_included,0,0,0,0,1,0,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 policy_clip,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.15,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.1,0.2,0.2,0.2
 KL_stopping,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
