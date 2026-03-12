@@ -1,5 +1,5 @@
 Using cpu device
-paramID: 31, iteration: 0, seed: 656414
+paramID: 31, iteration: 0, seed: 729426
 env: metapop1
 device: cpu
 state size: (np.int64(10), np.int64(4)), action size: 20
@@ -15,514 +15,639 @@ KL stopping: False, target KL: 0.02
 c1: 0.5, c2: 0.003, entropy_loss_included: True, policy_clip: 0.2
 rollout length: 1024, minibatch size: 64, n_epochs: 10
 evaluation interval: 200, performance sampleN: 1000, parallel testing: False, deterministic eval: False
-max steps: 100, episodenum: 60000
+max steps: 100, episodenum: 80000
 -------------------------------------------------------
 --------------------------------------------------------
 serial calc_performance called
-Episode 200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: -6.13
-Actor Loss: -0.0289, Critic Loss: 0.4887, Entropy: 10.6667
+Episode 200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: -7.74
+Actor Loss: -0.0168, Critic Loss: 0.5170, Entropy: 11.1211
 best score so far: 0.00000
 -----------------------------------
 serial calc_performance called
-Episode 400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: -2.05
-Actor Loss: -0.0184, Critic Loss: 0.4263, Entropy: 8.9407
+Episode 400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: -4.27
+Actor Loss: -0.0243, Critic Loss: 0.5343, Entropy: 9.9721
 best score so far: 0.00000
 -----------------------------------
 Episode 500
 serial calc_performance called
-Episode 600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 0.49
-Actor Loss: -0.0089, Critic Loss: 0.3278, Entropy: 7.4228
-best score so far: 0.49297
+Episode 600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: -0.84
+Actor Loss: -0.0203, Critic Loss: 0.5074, Entropy: 8.2651
+best score so far: 0.00000
 -----------------------------------
 serial calc_performance called
-Episode 800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 1.83
-Actor Loss: -0.0165, Critic Loss: 0.5303, Entropy: 6.5733
-best score so far: 1.82612
+Episode 800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 0.66
+Actor Loss: -0.0146, Critic Loss: 0.5003, Entropy: 7.4667
+best score so far: 0.66340
 -----------------------------------
 Episode 1000
 serial calc_performance called
-Episode 1000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 2.48
-Actor Loss: -0.0136, Critic Loss: 0.6612, Entropy: 6.1577
-best score so far: 2.48402
+Episode 1000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 2.05
+Actor Loss: -0.0148, Critic Loss: 0.5434, Entropy: 6.7466
+best score so far: 2.04976
 -----------------------------------
 serial calc_performance called
-Episode 1200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 3.11
-Actor Loss: -0.0083, Critic Loss: 0.5163, Entropy: 5.4244
-best score so far: 3.11336
+Episode 1200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 2.56
+Actor Loss: -0.0123, Critic Loss: 0.5343, Entropy: 6.1406
+best score so far: 2.55937
 -----------------------------------
 serial calc_performance called
-Episode 1400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 3.26
-Actor Loss: -0.0082, Critic Loss: 0.5851, Entropy: 5.2436
-best score so far: 3.25689
+Episode 1400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 3.27
+Actor Loss: -0.0143, Critic Loss: 0.6337, Entropy: 5.4766
+best score so far: 3.27006
 -----------------------------------
 Episode 1500
 serial calc_performance called
-Episode 1600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 3.65
-Actor Loss: -0.0100, Critic Loss: 0.6013, Entropy: 5.1395
-best score so far: 3.64734
+Episode 1600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 3.80
+Actor Loss: -0.0071, Critic Loss: 0.6996, Entropy: 4.8160
+best score so far: 3.80235
 -----------------------------------
 serial calc_performance called
-Episode 1800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.04
-Actor Loss: -0.0126, Critic Loss: 0.6899, Entropy: 4.7506
-best score so far: 4.04034
+Episode 1800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 3.90
+Actor Loss: -0.0126, Critic Loss: 0.4132, Entropy: 4.7011
+best score so far: 3.90108
 -----------------------------------
 Episode 2000
 serial calc_performance called
-Episode 2000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.27
-Actor Loss: -0.0128, Critic Loss: 0.5994, Entropy: 4.2425
-best score so far: 4.27114
+Episode 2000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.14
+Actor Loss: -0.0095, Critic Loss: 0.5448, Entropy: 4.3141
+best score so far: 4.13862
 -----------------------------------
 serial calc_performance called
-Episode 2200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.48
-Actor Loss: -0.0090, Critic Loss: 0.7045, Entropy: 3.8449
-best score so far: 4.47594
+Episode 2200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.46
+Actor Loss: -0.0134, Critic Loss: 0.6963, Entropy: 3.7323
+best score so far: 4.45999
 -----------------------------------
 serial calc_performance called
-Episode 2400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.72
-Actor Loss: -0.0119, Critic Loss: 0.8130, Entropy: 3.8097
-best score so far: 4.71722
+Episode 2400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.76
+Actor Loss: -0.0154, Critic Loss: 0.6853, Entropy: 3.6313
+best score so far: 4.76417
 -----------------------------------
 Episode 2500
 serial calc_performance called
-Episode 2600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.57
-Actor Loss: -0.0134, Critic Loss: 0.7825, Entropy: 3.5389
-best score so far: 4.71722
+Episode 2600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.82
+Actor Loss: -0.0135, Critic Loss: 0.7713, Entropy: 3.3878
+best score so far: 4.81954
 -----------------------------------
 serial calc_performance called
-Episode 2800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.90
-Actor Loss: -0.0008, Critic Loss: 0.6140, Entropy: 3.3079
-best score so far: 4.89990
+Episode 2800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.85
+Actor Loss: -0.0160, Critic Loss: 0.8591, Entropy: 3.3145
+best score so far: 4.84516
 -----------------------------------
 Episode 3000
 serial calc_performance called
-Episode 3000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.97
-Actor Loss: -0.0082, Critic Loss: 0.6701, Entropy: 3.2737
-best score so far: 4.97028
+Episode 3000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.98
+Actor Loss: -0.0093, Critic Loss: 0.6828, Entropy: 3.1807
+best score so far: 4.97867
 -----------------------------------
 serial calc_performance called
-Episode 3200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.76
-Actor Loss: -0.0160, Critic Loss: 0.6830, Entropy: 3.4771
-best score so far: 4.97028
+Episode 3200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.96
+Actor Loss: -0.0130, Critic Loss: 0.6476, Entropy: 3.0318
+best score so far: 4.97867
 -----------------------------------
 serial calc_performance called
-Episode 3400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.77
-Actor Loss: -0.0124, Critic Loss: 0.7481, Entropy: 3.3252
-best score so far: 4.97028
+Episode 3400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.90
+Actor Loss: -0.0085, Critic Loss: 0.7168, Entropy: 2.9196
+best score so far: 4.97867
 -----------------------------------
 Episode 3500
 serial calc_performance called
-Episode 3600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 4.91
-Actor Loss: -0.0103, Critic Loss: 0.7033, Entropy: 3.3053
-best score so far: 4.97028
+Episode 3600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.05
+Actor Loss: -0.0123, Critic Loss: 0.8668, Entropy: 2.7119
+best score so far: 5.04533
 -----------------------------------
 serial calc_performance called
-Episode 3800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.10
-Actor Loss: -0.0108, Critic Loss: 0.7967, Entropy: 2.9960
-best score so far: 5.10308
+Episode 3800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.26
+Actor Loss: -0.0096, Critic Loss: 0.7062, Entropy: 2.5955
+best score so far: 5.25929
 -----------------------------------
 Episode 4000
 serial calc_performance called
-Episode 4000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.24
-Actor Loss: -0.0113, Critic Loss: 0.5214, Entropy: 2.8763
-best score so far: 5.24021
+Episode 4000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.22
+Actor Loss: -0.0131, Critic Loss: 0.7082, Entropy: 2.3886
+best score so far: 5.25929
 -----------------------------------
 serial calc_performance called
-Episode 4200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.09
-Actor Loss: -0.0126, Critic Loss: 0.7081, Entropy: 2.8385
-best score so far: 5.24021
+Episode 4200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.16
+Actor Loss: -0.0150, Critic Loss: 0.8471, Entropy: 2.3672
+best score so far: 5.25929
 -----------------------------------
 serial calc_performance called
-Episode 4400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.14
-Actor Loss: -0.0134, Critic Loss: 0.6503, Entropy: 2.7810
-best score so far: 5.24021
+Episode 4400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.32
+Actor Loss: -0.0080, Critic Loss: 0.7079, Entropy: 2.1637
+best score so far: 5.31653
 -----------------------------------
 Episode 4500
 serial calc_performance called
-Episode 4600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.04
-Actor Loss: -0.0151, Critic Loss: 0.7530, Entropy: 2.8654
-best score so far: 5.24021
+Episode 4600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.36
+Actor Loss: -0.0139, Critic Loss: 0.7947, Entropy: 2.3928
+best score so far: 5.35949
 -----------------------------------
 serial calc_performance called
-Episode 4800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.23
-Actor Loss: -0.0176, Critic Loss: 0.7049, Entropy: 2.4842
-best score so far: 5.24021
+Episode 4800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.43
+Actor Loss: -0.0136, Critic Loss: 0.6356, Entropy: 2.1097
+best score so far: 5.42930
 -----------------------------------
 Episode 5000
 serial calc_performance called
-Episode 5000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.15
-Actor Loss: -0.0142, Critic Loss: 0.8481, Entropy: 2.3684
-best score so far: 5.24021
+Episode 5000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.27
+Actor Loss: -0.0144, Critic Loss: 0.6162, Entropy: 2.0625
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 5200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.07
-Actor Loss: -0.0209, Critic Loss: 0.6138, Entropy: 2.5580
-best score so far: 5.24021
+Episode 5200,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.31
+Actor Loss: -0.0086, Critic Loss: 0.8827, Entropy: 2.0594
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 5400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.08
-Actor Loss: -0.0178, Critic Loss: 0.5483, Entropy: 2.2602
-best score so far: 5.24021
+Episode 5400,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.23
+Actor Loss: -0.0119, Critic Loss: 0.6750, Entropy: 2.2078
+best score so far: 5.42930
 -----------------------------------
 Episode 5500
 serial calc_performance called
-Episode 5600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.22
-Actor Loss: -0.0133, Critic Loss: 0.6199, Entropy: 2.2818
-best score so far: 5.24021
+Episode 5600,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.32
+Actor Loss: -0.0101, Critic Loss: 0.7096, Entropy: 1.9755
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 5800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.11
-Actor Loss: -0.0139, Critic Loss: 0.4789, Entropy: 2.3685
-best score so far: 5.24021
+Episode 5800,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.32
+Actor Loss: -0.0164, Critic Loss: 0.5624, Entropy: 1.9547
+best score so far: 5.42930
 -----------------------------------
 Episode 6000
 serial calc_performance called
-Episode 6000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.16
-Actor Loss: -0.0190, Critic Loss: 0.6561, Entropy: 2.3571
-best score so far: 5.24021
+Episode 6000,LR: A0.0004/C0.0003/E0.0003 Avg Performance: 5.38
+Actor Loss: -0.0182, Critic Loss: 0.5706, Entropy: 2.0754
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 6200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.29
-Actor Loss: -0.0168, Critic Loss: 0.9024, Entropy: 2.2988
-best score so far: 5.28588
+Episode 6200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.37
+Actor Loss: -0.0147, Critic Loss: 0.7943, Entropy: 1.9893
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 6400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.25
-Actor Loss: -0.0176, Critic Loss: 0.7814, Entropy: 2.3035
-best score so far: 5.28588
+Episode 6400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.24
+Actor Loss: -0.0127, Critic Loss: 0.7151, Entropy: 1.8729
+best score so far: 5.42930
 -----------------------------------
 Episode 6500
 serial calc_performance called
-Episode 6600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.22
-Actor Loss: -0.0156, Critic Loss: 0.6494, Entropy: 2.1636
-best score so far: 5.28588
+Episode 6600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.29
+Actor Loss: -0.0116, Critic Loss: 0.7594, Entropy: 1.8538
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 6800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.46
-Actor Loss: -0.0143, Critic Loss: 0.6831, Entropy: 2.0254
-best score so far: 5.46316
+Episode 6800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.31
+Actor Loss: -0.0134, Critic Loss: 0.7982, Entropy: 1.8641
+best score so far: 5.42930
 -----------------------------------
 Episode 7000
 serial calc_performance called
-Episode 7000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.37
-Actor Loss: -0.0163, Critic Loss: 0.6885, Entropy: 2.0840
-best score so far: 5.46316
+Episode 7000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.30
+Actor Loss: -0.0125, Critic Loss: 0.6375, Entropy: 1.8146
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 7200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.52
-Actor Loss: -0.0141, Critic Loss: 0.7574, Entropy: 1.9843
-best score so far: 5.52136
+Episode 7200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.41
+Actor Loss: -0.0144, Critic Loss: 0.8797, Entropy: 1.7201
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 7400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.37
-Actor Loss: -0.0162, Critic Loss: 0.5998, Entropy: 2.0512
-best score so far: 5.52136
+Episode 7400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.35
+Actor Loss: -0.0106, Critic Loss: 0.8302, Entropy: 1.6628
+best score so far: 5.42930
 -----------------------------------
 Episode 7500
 serial calc_performance called
-Episode 7600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.44
-Actor Loss: -0.0137, Critic Loss: 0.7627, Entropy: 1.8739
-best score so far: 5.52136
+Episode 7600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.27
+Actor Loss: -0.0137, Critic Loss: 0.6941, Entropy: 1.6223
+best score so far: 5.42930
 -----------------------------------
 serial calc_performance called
-Episode 7800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.39
-Actor Loss: -0.0182, Critic Loss: 0.7164, Entropy: 1.8959
-best score so far: 5.52136
+Episode 7800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.45
+Actor Loss: -0.0095, Critic Loss: 0.6992, Entropy: 1.5388
+best score so far: 5.45294
 -----------------------------------
 Episode 8000
 serial calc_performance called
-Episode 8000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.37
-Actor Loss: -0.0171, Critic Loss: 0.9728, Entropy: 1.8503
-best score so far: 5.52136
+Episode 8000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.44
+Actor Loss: -0.0123, Critic Loss: 0.6186, Entropy: 1.5427
+best score so far: 5.45294
 -----------------------------------
 serial calc_performance called
-Episode 8200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.53
-Actor Loss: -0.0173, Critic Loss: 0.5584, Entropy: 1.8284
-best score so far: 5.53212
+Episode 8200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.45
+Actor Loss: -0.0116, Critic Loss: 0.8051, Entropy: 1.4514
+best score so far: 5.45294
 -----------------------------------
 serial calc_performance called
-Episode 8400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.37
-Actor Loss: -0.0144, Critic Loss: 0.8101, Entropy: 1.6741
-best score so far: 5.53212
+Episode 8400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.35
+Actor Loss: -0.0140, Critic Loss: 0.7641, Entropy: 1.4886
+best score so far: 5.45294
 -----------------------------------
 Episode 8500
 serial calc_performance called
-Episode 8600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.60
-Actor Loss: -0.0153, Critic Loss: 0.8064, Entropy: 1.5139
-best score so far: 5.59591
+Episode 8600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.55
+Actor Loss: -0.0116, Critic Loss: 0.7663, Entropy: 1.4827
+best score so far: 5.55416
 -----------------------------------
 serial calc_performance called
-Episode 8800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.46
-Actor Loss: -0.0178, Critic Loss: 0.7158, Entropy: 1.4511
-best score so far: 5.59591
+Episode 8800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.44
+Actor Loss: -0.0134, Critic Loss: 0.7115, Entropy: 1.5106
+best score so far: 5.55416
 -----------------------------------
 Episode 9000
 serial calc_performance called
-Episode 9000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.44
-Actor Loss: -0.0107, Critic Loss: 0.8016, Entropy: 1.4112
-best score so far: 5.59591
+Episode 9000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.36
+Actor Loss: -0.0168, Critic Loss: 0.6652, Entropy: 1.6243
+best score so far: 5.55416
 -----------------------------------
 serial calc_performance called
-Episode 9200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.52
-Actor Loss: -0.0169, Critic Loss: 0.7793, Entropy: 1.3099
-best score so far: 5.59591
+Episode 9200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.50
+Actor Loss: -0.0127, Critic Loss: 0.7969, Entropy: 1.5386
+best score so far: 5.55416
 -----------------------------------
 serial calc_performance called
-Episode 9400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.74
-Actor Loss: -0.0139, Critic Loss: 0.8514, Entropy: 1.1930
-best score so far: 5.74244
+Episode 9400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.45
+Actor Loss: -0.0105, Critic Loss: 0.7577, Entropy: 1.4086
+best score so far: 5.55416
 -----------------------------------
 Episode 9500
 serial calc_performance called
-Episode 9600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.58
-Actor Loss: -0.0129, Critic Loss: 0.6822, Entropy: 1.1816
-best score so far: 5.74244
+Episode 9600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.47
+Actor Loss: -0.0106, Critic Loss: 0.6921, Entropy: 1.3900
+best score so far: 5.55416
 -----------------------------------
 serial calc_performance called
-Episode 9800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.51
-Actor Loss: -0.0140, Critic Loss: 0.7905, Entropy: 1.1390
-best score so far: 5.74244
+Episode 9800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.47
+Actor Loss: -0.0102, Critic Loss: 0.7228, Entropy: 1.3604
+best score so far: 5.55416
 -----------------------------------
 Episode 10000
 serial calc_performance called
-Episode 10000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.66
-Actor Loss: -0.0095, Critic Loss: 0.5952, Entropy: 1.1042
-best score so far: 5.74244
+Episode 10000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.45
+Actor Loss: -0.0111, Critic Loss: 0.8984, Entropy: 1.3694
+best score so far: 5.55416
 -----------------------------------
 serial calc_performance called
-Episode 10200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.62
-Actor Loss: -0.0136, Critic Loss: 0.5997, Entropy: 1.0432
-best score so far: 5.74244
+Episode 10200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.46
+Actor Loss: -0.0156, Critic Loss: 0.8517, Entropy: 1.5370
+best score so far: 5.55416
 -----------------------------------
 serial calc_performance called
-Episode 10400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.58
-Actor Loss: -0.0103, Critic Loss: 0.5968, Entropy: 0.9981
-best score so far: 5.74244
+Episode 10400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.57
+Actor Loss: -0.0157, Critic Loss: 0.6402, Entropy: 1.5557
+best score so far: 5.56656
 -----------------------------------
 Episode 10500
 serial calc_performance called
-Episode 10600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.60
-Actor Loss: -0.0152, Critic Loss: 0.6486, Entropy: 1.0270
-best score so far: 5.74244
+Episode 10600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.55
+Actor Loss: -0.0126, Critic Loss: 0.7425, Entropy: 1.6045
+best score so far: 5.56656
 -----------------------------------
 serial calc_performance called
-Episode 10800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.55
-Actor Loss: -0.0088, Critic Loss: 0.9412, Entropy: 1.1046
-best score so far: 5.74244
+Episode 10800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.40
+Actor Loss: -0.0106, Critic Loss: 0.7621, Entropy: 1.6620
+best score so far: 5.56656
 -----------------------------------
 Episode 11000
 serial calc_performance called
-Episode 11000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.59
-Actor Loss: -0.0134, Critic Loss: 0.6430, Entropy: 1.1204
-best score so far: 5.74244
+Episode 11000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.55
+Actor Loss: -0.0179, Critic Loss: 1.0844, Entropy: 1.6616
+best score so far: 5.56656
 -----------------------------------
 serial calc_performance called
-Episode 11200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.70
-Actor Loss: -0.0120, Critic Loss: 0.6484, Entropy: 1.0003
-best score so far: 5.74244
+Episode 11200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.34
+Actor Loss: -0.0143, Critic Loss: 0.5680, Entropy: 1.5339
+best score so far: 5.56656
 -----------------------------------
 serial calc_performance called
-Episode 11400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.62
-Actor Loss: -0.0099, Critic Loss: 0.8313, Entropy: 1.0491
-best score so far: 5.74244
+Episode 11400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.55
+Actor Loss: -0.0148, Critic Loss: 1.0049, Entropy: 1.6293
+best score so far: 5.56656
 -----------------------------------
 Episode 11500
 serial calc_performance called
-Episode 11600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.64
-Actor Loss: -0.0111, Critic Loss: 0.6369, Entropy: 0.9604
-best score so far: 5.74244
+Episode 11600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.43
+Actor Loss: -0.0109, Critic Loss: 0.9388, Entropy: 1.6915
+best score so far: 5.56656
 -----------------------------------
 serial calc_performance called
-Episode 11800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.74
-Actor Loss: -0.0090, Critic Loss: 0.7855, Entropy: 0.9726
-best score so far: 5.74244
+Episode 11800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.56
+Actor Loss: -0.0118, Critic Loss: 0.6456, Entropy: 1.4772
+best score so far: 5.56656
 -----------------------------------
 Episode 12000
 serial calc_performance called
-Episode 12000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.73
-Actor Loss: -0.0155, Critic Loss: 0.6439, Entropy: 0.9381
-best score so far: 5.74244
+Episode 12000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.62
+Actor Loss: -0.0123, Critic Loss: 1.0034, Entropy: 1.4498
+best score so far: 5.62133
 -----------------------------------
 serial calc_performance called
-Episode 12200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.65
-Actor Loss: -0.0128, Critic Loss: 0.7368, Entropy: 0.9012
-best score so far: 5.74244
+Episode 12200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.48
+Actor Loss: -0.0129, Critic Loss: 0.6658, Entropy: 1.6235
+best score so far: 5.62133
 -----------------------------------
 serial calc_performance called
-Episode 12400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.73
-Actor Loss: -0.0098, Critic Loss: 0.9327, Entropy: 0.9234
-best score so far: 5.74244
+Episode 12400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.47
+Actor Loss: -0.0153, Critic Loss: 0.5776, Entropy: 1.5260
+best score so far: 5.62133
 -----------------------------------
 Episode 12500
 serial calc_performance called
-Episode 12600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.74
-Actor Loss: -0.0106, Critic Loss: 0.8609, Entropy: 0.9912
-best score so far: 5.74244
+Episode 12600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.53
+Actor Loss: -0.0141, Critic Loss: 0.7097, Entropy: 1.4491
+best score so far: 5.62133
 -----------------------------------
 serial calc_performance called
-Episode 12800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.62
-Actor Loss: -0.0077, Critic Loss: 0.8645, Entropy: 0.9330
-best score so far: 5.74244
+Episode 12800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.54
+Actor Loss: -0.0132, Critic Loss: 0.7663, Entropy: 1.4992
+best score so far: 5.62133
 -----------------------------------
 Episode 13000
 serial calc_performance called
-Episode 13000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.69
-Actor Loss: -0.0104, Critic Loss: 0.7167, Entropy: 0.9438
-best score so far: 5.74244
+Episode 13000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.50
+Actor Loss: -0.0092, Critic Loss: 0.7980, Entropy: 1.4042
+best score so far: 5.62133
 -----------------------------------
 serial calc_performance called
-Episode 13200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.61
-Actor Loss: -0.0100, Critic Loss: 0.7388, Entropy: 0.9290
-best score so far: 5.74244
+Episode 13200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.54
+Actor Loss: -0.0121, Critic Loss: 0.7246, Entropy: 1.4991
+best score so far: 5.62133
 -----------------------------------
 serial calc_performance called
-Episode 13400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.63
-Actor Loss: -0.0123, Critic Loss: 0.7207, Entropy: 0.9020
-best score so far: 5.74244
+Episode 13400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.67
+Actor Loss: -0.0145, Critic Loss: 0.9490, Entropy: 1.3184
+best score so far: 5.66967
 -----------------------------------
 Episode 13500
 serial calc_performance called
-Episode 13600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.67
-Actor Loss: -0.0073, Critic Loss: 0.7254, Entropy: 0.8912
-best score so far: 5.74244
+Episode 13600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.56
+Actor Loss: -0.0128, Critic Loss: 0.6282, Entropy: 1.3769
+best score so far: 5.66967
 -----------------------------------
 serial calc_performance called
-Episode 13800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.63
-Actor Loss: -0.0150, Critic Loss: 0.7951, Entropy: 0.8315
-best score so far: 5.74244
+Episode 13800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.41
+Actor Loss: -0.0103, Critic Loss: 0.7259, Entropy: 1.3354
+best score so far: 5.66967
 -----------------------------------
 Episode 14000
 serial calc_performance called
-Episode 14000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.79
-Actor Loss: -0.0119, Critic Loss: 0.8598, Entropy: 0.9286
-best score so far: 5.78901
+Episode 14000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.65
+Actor Loss: -0.0130, Critic Loss: 0.5849, Entropy: 1.2762
+best score so far: 5.66967
 -----------------------------------
 serial calc_performance called
-Episode 14200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.74
-Actor Loss: -0.0111, Critic Loss: 1.1519, Entropy: 0.8822
-best score so far: 5.78901
+Episode 14200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.70
+Actor Loss: -0.0110, Critic Loss: 0.6735, Entropy: 1.2083
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 14400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.73
-Actor Loss: -0.0116, Critic Loss: 0.6969, Entropy: 0.9751
-best score so far: 5.78901
+Episode 14400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.64
+Actor Loss: -0.0077, Critic Loss: 0.9551, Entropy: 0.9948
+best score so far: 5.69977
 -----------------------------------
 Episode 14500
 serial calc_performance called
-Episode 14600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.67
-Actor Loss: -0.0132, Critic Loss: 0.7538, Entropy: 0.9521
-best score so far: 5.78901
+Episode 14600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.69
+Actor Loss: -0.0161, Critic Loss: 0.8315, Entropy: 1.1150
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 14800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.68
-Actor Loss: -0.0103, Critic Loss: 0.9011, Entropy: 0.9729
-best score so far: 5.78901
+Episode 14800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.52
+Actor Loss: -0.0118, Critic Loss: 0.7653, Entropy: 1.1830
+best score so far: 5.69977
 -----------------------------------
 Episode 15000
 serial calc_performance called
-Episode 15000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.75
-Actor Loss: -0.0144, Critic Loss: 0.7313, Entropy: 0.9524
-best score so far: 5.78901
+Episode 15000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.68
+Actor Loss: -0.0152, Critic Loss: 0.7105, Entropy: 1.1517
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 15200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.68
-Actor Loss: -0.0105, Critic Loss: 0.7393, Entropy: 0.9818
-best score so far: 5.78901
+Episode 15200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.58
+Actor Loss: -0.0126, Critic Loss: 0.6309, Entropy: 1.2448
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 15400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.75
-Actor Loss: -0.0090, Critic Loss: 0.8776, Entropy: 0.9532
-best score so far: 5.78901
+Episode 15400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.52
+Actor Loss: -0.0133, Critic Loss: 0.8856, Entropy: 1.3060
+best score so far: 5.69977
 -----------------------------------
 Episode 15500
 serial calc_performance called
-Episode 15600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.78
-Actor Loss: -0.0099, Critic Loss: 0.8118, Entropy: 0.9553
-best score so far: 5.78901
+Episode 15600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.62
+Actor Loss: -0.0164, Critic Loss: 0.6935, Entropy: 1.3365
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 15800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.77
-Actor Loss: -0.0069, Critic Loss: 0.7682, Entropy: 0.9399
-best score so far: 5.78901
+Episode 15800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.50
+Actor Loss: -0.0164, Critic Loss: 0.6297, Entropy: 1.3758
+best score so far: 5.69977
 -----------------------------------
 Episode 16000
 serial calc_performance called
-Episode 16000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.80
-Actor Loss: -0.0108, Critic Loss: 0.8645, Entropy: 0.8920
-best score so far: 5.79601
+Episode 16000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.59
+Actor Loss: -0.0100, Critic Loss: 0.6065, Entropy: 1.2816
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 16200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.82
-Actor Loss: -0.0107, Critic Loss: 0.5536, Entropy: 0.8277
-best score so far: 5.81904
+Episode 16200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.49
+Actor Loss: -0.0094, Critic Loss: 0.6096, Entropy: 1.0459
+best score so far: 5.69977
 -----------------------------------
 serial calc_performance called
-Episode 16400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.69
-Actor Loss: -0.0082, Critic Loss: 0.7405, Entropy: 0.8080
-best score so far: 5.81904
+Episode 16400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.78
+Actor Loss: -0.0105, Critic Loss: 0.7468, Entropy: 1.1534
+best score so far: 5.77709
 -----------------------------------
 Episode 16500
 serial calc_performance called
-Episode 16600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.70
-Actor Loss: -0.0067, Critic Loss: 0.7742, Entropy: 0.8345
-best score so far: 5.81904
+Episode 16600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.74
+Actor Loss: -0.0159, Critic Loss: 0.7420, Entropy: 1.1250
+best score so far: 5.77709
 -----------------------------------
 serial calc_performance called
-Episode 16800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.79
-Actor Loss: -0.0122, Critic Loss: 0.7178, Entropy: 0.7549
-best score so far: 5.81904
+Episode 16800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.78
+Actor Loss: -0.0079, Critic Loss: 0.8260, Entropy: 1.0779
+best score so far: 5.77709
 -----------------------------------
 Episode 17000
 serial calc_performance called
-Episode 17000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.76
-Actor Loss: -0.0094, Critic Loss: 0.9660, Entropy: 0.7373
-best score so far: 5.81904
+Episode 17000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.65
+Actor Loss: -0.0125, Critic Loss: 0.7785, Entropy: 1.1387
+best score so far: 5.77709
 -----------------------------------
 serial calc_performance called
-Episode 17200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.70
-Actor Loss: -0.0106, Critic Loss: 0.7541, Entropy: 0.7068
-best score so far: 5.81904
+Episode 17200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.60
+Actor Loss: -0.0126, Critic Loss: 0.7374, Entropy: 1.0566
+best score so far: 5.77709
 -----------------------------------
 serial calc_performance called
-Episode 17400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.76
-Actor Loss: -0.0104, Critic Loss: 0.6331, Entropy: 0.6891
-best score so far: 5.81904
+Episode 17400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.72
+Actor Loss: -0.0105, Critic Loss: 0.6085, Entropy: 1.1810
+best score so far: 5.77709
 -----------------------------------
 Episode 17500
 serial calc_performance called
-Episode 17600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.78
-Actor Loss: -0.0094, Critic Loss: 0.7036, Entropy: 0.6870
-best score so far: 5.81904
+Episode 17600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.65
+Actor Loss: -0.0146, Critic Loss: 0.8760, Entropy: 1.1322
+best score so far: 5.77709
 -----------------------------------
 serial calc_performance called
-Episode 17800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.83
-Actor Loss: -0.0072, Critic Loss: 0.7236, Entropy: 0.6334
-best score so far: 5.83035
+Episode 17800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.62
+Actor Loss: -0.0178, Critic Loss: 0.7372, Entropy: 1.1955
+best score so far: 5.77709
 -----------------------------------
 Episode 18000
 serial calc_performance called
-Episode 18000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.76
-Actor Loss: -0.0096, Critic Loss: 1.0543, Entropy: 0.6227
-best score so far: 5.83035
+Episode 18000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.61
+Actor Loss: -0.0125, Critic Loss: 0.4858, Entropy: 1.1441
+best score so far: 5.77709
 -----------------------------------
 serial calc_performance called
-Episode 18200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.80
-Actor Loss: -0.0104, Critic Loss: 0.6565, Entropy: 0.6038
-best score so far: 5.83035
+Episode 18200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.64
+Actor Loss: -0.0157, Critic Loss: 0.9215, Entropy: 1.0723
+best score so far: 5.77709
 -----------------------------------
-Kill rule triggered
-Kill rule triggered at episode 18200, stopping training.
-best Policy network found at episode 17800
-Training completed.
-Tuneset 1, Iteration 0: [ 5.830352  5.81904   5.798566  5.796012  5.791256  5.789008  5.783708
-  5.77827   5.772554  5.764546  5.759946  5.758212  5.754636  5.746448
-  5.742438  5.742036  5.738344  5.737112  5.733058  5.729558  5.72797
-  5.70286   5.70197   5.699286  5.68653   5.685148  5.684964  5.680394
-  5.668488  5.667702  5.66086   5.653434  5.636156  5.62855   5.626338
-  5.622346  5.621954  5.61721   5.607882  5.596944  5.595912  5.58904
-  5.578268  5.576546  5.548094  5.53212   5.521356  5.520882  5.514788
-  5.463156  5.461054  5.441774  5.436246  5.392986  5.373762  5.36751
-  5.367142  5.366908  5.285878  5.250886  5.240212  5.227878  5.224566
-  5.216416  5.163004  5.153058  5.142756  5.11398   5.103082  5.087808
-  5.08057   5.069166  5.042378  4.970282  4.913548  4.899896  4.773998
-  4.764814  4.717222  4.571618  4.47594   4.271144  4.040338  3.64734
-  3.256886  3.113356  2.48402   1.826116  0.49297  -2.04725  -6.133562]
+serial calc_performance called
+Episode 18400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.58
+Actor Loss: -0.0102, Critic Loss: 0.7052, Entropy: 1.0228
+best score so far: 5.77709
+-----------------------------------
+Episode 18500
+serial calc_performance called
+Episode 18600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.65
+Actor Loss: -0.0102, Critic Loss: 0.5398, Entropy: 1.0234
+best score so far: 5.77709
+-----------------------------------
+serial calc_performance called
+Episode 18800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.89
+Actor Loss: -0.0111, Critic Loss: 0.7695, Entropy: 0.9065
+best score so far: 5.88550
+-----------------------------------
+Episode 19000
+serial calc_performance called
+Episode 19000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.78
+Actor Loss: -0.0118, Critic Loss: 0.8720, Entropy: 0.7936
+best score so far: 5.88550
+-----------------------------------
+serial calc_performance called
+Episode 19200,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.79
+Actor Loss: -0.0111, Critic Loss: 0.4715, Entropy: 0.8104
+best score so far: 5.88550
+-----------------------------------
+serial calc_performance called
+Episode 19400,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.69
+Actor Loss: -0.0105, Critic Loss: 0.8197, Entropy: 0.7942
+best score so far: 5.88550
+-----------------------------------
+Episode 19500
+serial calc_performance called
+Episode 19600,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.76
+Actor Loss: -0.0120, Critic Loss: 0.6378, Entropy: 0.8675
+best score so far: 5.88550
+-----------------------------------
+serial calc_performance called
+Episode 19800,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.76
+Actor Loss: -0.0093, Critic Loss: 0.7069, Entropy: 0.7698
+best score so far: 5.88550
+-----------------------------------
+Episode 20000
+serial calc_performance called
+Episode 20000,LR: A0.000133/C0.0001/E0.0001 Avg Performance: 5.76
+Actor Loss: -0.0124, Critic Loss: 0.8020, Entropy: 0.7385
+best score so far: 5.88550
+-----------------------------------
+serial calc_performance called
+Episode 20200,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.74
+Actor Loss: -0.0087, Critic Loss: 0.8110, Entropy: 0.7547
+best score so far: 5.88550
+-----------------------------------
+serial calc_performance called
+Episode 20400,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.83
+Actor Loss: -0.0094, Critic Loss: 0.8383, Entropy: 0.6586
+best score so far: 5.88550
+-----------------------------------
+Episode 20500
+serial calc_performance called
+Episode 20600,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.88
+Actor Loss: -0.0087, Critic Loss: 0.8539, Entropy: 0.6474
+best score so far: 5.88550
+-----------------------------------
+serial calc_performance called
+Episode 20800,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.84
+Actor Loss: -0.0065, Critic Loss: 0.8075, Entropy: 0.7063
+best score so far: 5.88550
+-----------------------------------
+Episode 21000
+serial calc_performance called
+Episode 21000,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.94
+Actor Loss: -0.0072, Critic Loss: 0.7957, Entropy: 0.7006
+best score so far: 5.93942
+-----------------------------------
+serial calc_performance called
+Episode 21200,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.90
+Actor Loss: -0.0063, Critic Loss: 0.7896, Entropy: 0.6456
+best score so far: 5.93942
+-----------------------------------
+serial calc_performance called
+Episode 21400,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.78
+Actor Loss: -0.0090, Critic Loss: 0.6652, Entropy: 0.6431
+best score so far: 5.93942
+-----------------------------------
+Episode 21500
+serial calc_performance called
+Episode 21600,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.81
+Actor Loss: -0.0066, Critic Loss: 0.6771, Entropy: 0.6678
+best score so far: 5.93942
+-----------------------------------
+serial calc_performance called
+Episode 21800,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.81
+Actor Loss: -0.0077, Critic Loss: 0.8605, Entropy: 0.7059
+best score so far: 5.93942
+-----------------------------------
+Episode 22000
+serial calc_performance called
+Episode 22000,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.88
+Actor Loss: -0.0053, Critic Loss: 0.7507, Entropy: 0.6784
+best score so far: 5.93942
+-----------------------------------
+serial calc_performance called
+Episode 22200,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.75
+Actor Loss: -0.0100, Critic Loss: 0.8004, Entropy: 0.6813
+best score so far: 5.93942
+-----------------------------------
+serial calc_performance called
+Episode 22400,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.89
+Actor Loss: -0.0091, Critic Loss: 0.6093, Entropy: 0.6061
+best score so far: 5.93942
+-----------------------------------
+Episode 22500
+serial calc_performance called
+Episode 22600,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.91
+Actor Loss: -0.0098, Critic Loss: 0.8432, Entropy: 0.6055
+best score so far: 5.93942
+-----------------------------------
+serial calc_performance called
+Episode 22800,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.95
+Actor Loss: -0.0066, Critic Loss: 0.6855, Entropy: 0.5971
+best score so far: 5.95471
+-----------------------------------
+Episode 23000
+serial calc_performance called
+Episode 23000,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.86
+Actor Loss: -0.0103, Critic Loss: 0.8338, Entropy: 0.6697
+best score so far: 5.95471
+-----------------------------------
+serial calc_performance called
+Episode 23200,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.95
+Actor Loss: -0.0092, Critic Loss: 0.6907, Entropy: 0.6027
+best score so far: 5.95471
+-----------------------------------
+serial calc_performance called
+Episode 23400,LR: A4.4e-05/C3.3e-05/E3.3e-05 Avg Performance: 5.87
+Actor Loss: -0.0081, Critic Loss: 0.7184, Entropy: 0.5915
+best score so far: 5.95471
+-----------------------------------
+Episode 23500
+serial calc_performance called
