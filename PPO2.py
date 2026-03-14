@@ -262,11 +262,11 @@ class PPO2():
                     inttestscore = calc_performance(self.env,self.device,self.rms,1,self.agent.actorcritic,self.performance_sampleN,self.max_steps,self.deterministic_eval)
                 inttestscores.append(inttestscore)
                 if inttestscore > best_score:
-                    savepath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
                     best_score_epi = i_episode
                     best_score = inttestscore
                 # save the model if it satisfies the saving rule
                 if self.saverule(inttestscore,best_score):
+                    savepath = f"{self.testwd}/PolicyNetwork_{self.env.envID}_par{self.env.paramsetID}_set{self.env.settingID}_{self.algorithmID}_episode{i_episode}.pt"
                     self.agent.save_models(savepath)
                     # save the running mean and sd/var as well for this episode in pickle
                     if self.standardize:
@@ -327,6 +327,9 @@ class PPO2():
     
     def killrule(self, best_score, i_episode):
         if self.env.envID == 'metapop1':
+            if best_score < 5 and i_episode > 20000: # if the performance is already very good, stop training to save compute
+                print(f"Kill rule triggered")
+                return True
             if best_score < 5.3 and i_episode > 40000: # if the performance is already very good, stop training to save compute
                 print(f"Kill rule triggered")
                 return True
@@ -336,6 +339,6 @@ class PPO2():
         return False
     def saverule(self, inttestscore, best_score):
         if self.env.envID == 'metapop1':
-            if inttestscore >= best_score or inttestscore >= 5.5:
+            if inttestscore >= best_score or inttestscore >= 5.7:
                 return True
         return False
