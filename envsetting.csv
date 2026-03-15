@@ -21,3 +21,5 @@
 19,0,5,0,0,0,0,uniform,74,9,1,5,0,0,"n=5 MDP 2D really high cost high extinction, median centrality"
 20,0,10,0,0,0,0,uniform,6,10,2,10,1,1,"n=10 MDP 2D really high cost high extinction, median centrality"
 21,0,20,0,0,0,0,uniform,0,11,4,20,1,1,"n=20 MDP 2D really high cost high extinction, median centrality"
+22,0,10,0,0,0,0,uniform,95,10,2,10,1,1,"n=10 MDP 2D really high cost high extinction, low centrality"
+23,0,10,0,0,0,0,uniform,25,10,2,10,1,1,"n=10 MDP 2D really high cost high extinction, low centrality"
