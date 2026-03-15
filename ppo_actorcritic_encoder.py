@@ -251,7 +251,7 @@ class ActorCritic_metapop1_MDP(nn.Module):
             p[idx] = 0.0
         return logp, entropy
 
-    def getaction(self, state, get_action_only=False, withvalue=False):
+    def getaction(self, state, get_action_only=False, get_action_prob=False, withvalue=False):
         if withvalue:
             x, value = self(state)
         else:
@@ -274,7 +274,18 @@ class ActorCritic_metapop1_MDP(nn.Module):
 
         if get_action_only:
             return action
-        
+        if get_action_prob:
+            if self.Rbernoulli == 1:
+                xR = T.sigmoid(x[:, :self.Rheadsize])
+            else: # just do softmax
+                xR = F.softmax(x[:, :self.Rheadsize], dim=1)
+            if self.Sbernoulli == 1:
+                xS = T.sigmoid(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize])
+            else:
+                xS = F.softmax(x[:, self.Rheadsize:self.Rheadsize+self.Sheadsize], dim=1)
+            action_prob = T.cat([xR, xS], dim=1)
+            return action_prob
+
         if self.Rbernoulli == 1:
             logprobR = Rdist.log_prob(aR).item()
         else:
