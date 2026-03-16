@@ -339,6 +339,6 @@ class PPO2():
         return False
     def saverule(self, inttestscore, best_score):
         if self.env.envID == 'metapop1':
-            if inttestscore >= best_score or inttestscore >= 5.7:
+            if inttestscore >= best_score or inttestscore >= 5.9:
                 return True
         return False

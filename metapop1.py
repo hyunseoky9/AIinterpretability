@@ -67,6 +67,7 @@ class metapop1:
                 weights_collection = pickle.load(f)
             self.w = weights_collection
         
+        self.incoming_w = np.sum(self.w, axis=0) # incoming dispersal weight for each patch
 
         # set dimensions
         ## state variables: S = occupancy state, H = habitat quality, M = survey mark, Z = dispersal regime
@@ -112,8 +113,8 @@ class metapop1:
             self.oidx['t'] = np.arange(self.t_dim)+self.X_dim+self.H_dim
         if self.dim2state == 1: # corect sidx and oidx  if dim2state ==1
             if self.partial_observability == 1:
-                self.sidx = {'X': 0, 'H': 1, 'M': 2, 'Z': 3+self.dim2state_with_C, 't': 4+self.dim2state_with_C} if self.dispersal_regime == 1 else {'X': 0, 'H': 1, 'M': 2, 't': 3+self.dim2state_with_C}
-                self.oidx = {'Y': 0, 'H': 1, 'M': 2, 'Z': 3+self.dim2state_with_C, 't': 4+self.dim2state_with_C} if self.dispersal_regime == 1 else {'Y': 0, 'H': 1, 'M': 2, 't': 3+self.dim2state_with_C}
+                self.sidx = {'X': 0, 'H': 1, 'M': 2, 'C': 3, 'Z': 3+self.dim2state_with_C, 't': 4+self.dim2state_with_C} if self.dispersal_regime == 1 else {'X': 0, 'H': 1, 'M': 2, 't': 3+self.dim2state_with_C}
+                self.oidx = {'Y': 0, 'H': 1, 'M': 2, 'C': 3,'Z': 3+self.dim2state_with_C, 't': 4+self.dim2state_with_C} if self.dispersal_regime == 1 else {'Y': 0, 'H': 1, 'M': 2, 't': 3+self.dim2state_with_C}
             else:
                 self.sidx = {'X': 0, 'H': 1, 'Z': 2+self.dim2state_with_C, 't': 3+self.dim2state_with_C} if self.dispersal_regime == 1 else {'X': 0, 'H': 1, 't': 2+self.dim2state_with_C}
                 self.oidx = {'X': 0, 'H': 1, 'Z': 2+self.dim2state_with_C, 't': 3+self.dim2state_with_C} if self.dispersal_regime == 1 else {'X': 0, 'H': 1, 't': 2+self.dim2state_with_C}
@@ -300,3 +301,80 @@ class metapop1:
         Y = np.zeros(self.Y_dim, dtype=int)
         Y[M==1] = X[M==1] * np.random.choice([1,0], size=np.sum(M), p=[self.pdet, 1-self.pdet]) + (1-X[M==1]) * np.random.choice([1,0], size=np.sum(M), p=[self.pfp, 1-self.pfp]) # initial survey observation
         return M, Y 
+
+    def heuristic_action(self):
+        '''
+        heuristic rule for no dispersal regime, no partial observability, and no terminal penalty.
+        * Prioritize patches with higher incoming dispersal weight from all patches
+        * no action on the last 2 steps if patch abundance is 10 or 20; no action on the last step if patch abundance is 5.
+        - if extinct and bad habitat: restore and supplement
+        - if extinct and good habitat and incoming dispersal weight from persisting patches is below w^bar_1: supplement only
+        - if persisting and bad habitat and incoming dispersal weight from persisting patches is below w^bar_2: restore and supplement
+        - if persisting and bad habitat and incoming dispersal weight from persisting patches is equal or above w^bar_2: restore only
+        - if persisting and good habitat: no action
+        '''
+
+        if self.dim2state == 1:
+            X = self.obs[:, self.oidx["X"]]
+            H = self.obs[:, self.oidx["H"]]
+            t = int(self.obs[0, self.oidx["t"]])
+        else:
+            X = self.obs[self.oidx["X"]]
+            H = self.obs[self.oidx["H"]]
+            t = int(self.obs[self.oidx["t"]][0])
+        if self.dispersal_regime == 1:
+            Z = self.obs[0,self.oidx["Z"]] if self.dim2state == 1 else self.obs[self.oidx["Z"]][0]
+        else: 
+            Z = 0
+        
+        # set wbar1 and wbar2 thresholds for heuristic rule based on settingID            
+        if self.settingID == 18: # n=5
+            wbar1 = None
+            wbar2 = None
+        elif self.settingID == 20: # n=10 median centrality
+            wbar1 = 1.4
+            wbar2 = 1.4
+        elif self.settingID == 21: # n=20 
+            wbar1 = 1.5
+            wbar2 = 1.6
+        elif self.settingID == 22: # n=10 low centrality
+            wbar1 = None
+            wbar2 = None
+        elif self.settingID == 23: # n=10 high centrality
+            wbar1 = None
+            wbar2 = None
+        incoming_w_occupied = self.incoming_w * X # incoming dispersal weight from occupied patches
+
+        # assign actions based on heuristic rule
+        noactiontime = self.T - 2 if self.patchnum in [10,20] else self.T - 1
+        if t >= noactiontime : # no action on the last few steps
+            return np.zeros(self.actionspace_dim, dtype=int)
+        else:
+            ridx = []
+            sidx = []
+            aR = np.zeros(self.aR_dim, dtype=int)
+            aS = np.zeros(self.aS_dim, dtype=int)
+            for i in range(self.patchnum):
+                if X[i] == 0 and H[i] == 0: # extinct and bad habitat
+                    ridx.append(i)
+                    sidx.append(i)
+                elif X[i] == 0 and H[i] == 1 and incoming_w_occupied[i] < wbar1: # extinct and good habitat and low incoming dispersal weight
+                    sidx.append(i)
+                elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] < wbar2: # persisting and bad habitat and low incoming dispersal weight
+                    ridx.append(i)
+                    sidx.append(i)
+                elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] >= wbar2: # persisting and bad habitat and high incoming dispersal weight
+                    ridx.append(i)
+            # sort by incoming dispersal weight and cut by self.kR and self.kS
+            if len(ridx) > self.kR:
+                ridx = sorted(ridx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kR]
+            if len(sidx) > self.kS:
+                sidx = sorted(sidx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kS]
+            # create action vector
+            if len(ridx) > 0:
+                aR[np.array(ridx)] = 1
+            if len(sidx) > 0:
+                aS[np.array(sidx)] = 1
+            action = np.concatenate([aR, aS])
+            return action
+
