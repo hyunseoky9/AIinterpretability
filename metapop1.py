@@ -329,21 +329,15 @@ class metapop1:
         
         # set wbar1 and wbar2 thresholds for heuristic rule based on settingID            
         if self.settingID == 18: # n=5
-            wbar1 = None
-            wbar2 = None
-        elif self.settingID == 20: # n=10 median centrality
-            wbar1 = 1.4
-            wbar2 = 1.4
+            wbar1 = 1.75
+            wbar2 = 1.8
+        elif self.settingID in [20,22,23]: # n=10 median, low, high centrality
+            wbar1 = 1.8
+            wbar2 = 1.8
         elif self.settingID == 21: # n=20 
-            wbar1 = 1.5
-            wbar2 = 1.6
-        elif self.settingID == 22: # n=10 low centrality
-            wbar1 = None
-            wbar2 = None
-        elif self.settingID == 23: # n=10 high centrality
-            wbar1 = None
-            wbar2 = None
-        incoming_w_occupied = self.incoming_w * X # incoming dispersal weight from occupied patches
+            wbar1 = 1.8
+            wbar2 = 1.8
+        incoming_w_occupied = np.matmul(self.w, X) # incoming dispersal weight from occupied patches
 
         # assign actions based on heuristic rule
         noactiontime = self.T - 2 if self.patchnum in [10,20] else self.T - 1
@@ -354,27 +348,38 @@ class metapop1:
             sidx = []
             aR = np.zeros(self.aR_dim, dtype=int)
             aS = np.zeros(self.aS_dim, dtype=int)
+            bothactionidx = []
             for i in range(self.patchnum):
                 if X[i] == 0 and H[i] == 0: # extinct and bad habitat
                     ridx.append(i)
                     sidx.append(i)
-                elif X[i] == 0 and H[i] == 1 and incoming_w_occupied[i] < wbar1: # extinct and good habitat and low incoming dispersal weight
+                    bothactionidx.append(i)
+                elif X[i] == 0 and H[i] == 1 and incoming_w_occupied[i] <= wbar1: # extinct and good habitat and low incoming dispersal weight
                     sidx.append(i)
-                elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] < wbar2: # persisting and bad habitat and low incoming dispersal weight
+                elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] <= wbar2: # persisting and bad habitat and low incoming dispersal weight
                     ridx.append(i)
                     sidx.append(i)
+                    bothactionidx.append(i)
                 elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] >= wbar2: # persisting and bad habitat and high incoming dispersal weight
                     ridx.append(i)
             # sort by incoming dispersal weight and cut by self.kR and self.kS
-            if len(ridx) > self.kR:
-                ridx = sorted(ridx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kR]
-            if len(sidx) > self.kS:
-                sidx = sorted(sidx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kS]
+            
+            newridx = sorted(ridx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kR] if len(ridx) > self.kR else ridx
+            newsidx = sorted(sidx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kS] if len(sidx) > self.kS else sidx
+            # if patches that have both actions get taken off of one of the actions, they
+            # should get taken off of the other action as well.
+            for i in bothactionidx:
+                if i in ridx and i not in newridx:
+                    if i in newsidx:
+                        newsidx.remove(i)
+                elif i in sidx and i not in newsidx:
+                    if i in newridx:
+                        newridx.remove(i)
             # create action vector
             if len(ridx) > 0:
-                aR[np.array(ridx)] = 1
+                aR[np.array(newridx)] = 1
             if len(sidx) > 0:
-                aS[np.array(sidx)] = 1
+                aS[np.array(newsidx)] = 1
             action = np.concatenate([aR, aS])
             return action
 
