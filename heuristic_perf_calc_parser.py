@@ -2,10 +2,11 @@
 import os
 import numpy as np
 
-# what to parse
+# SETTING
+## what to parse
 envsetting = 20
-idrange = np.arange(0,20)
-# how many sets to make 
+idrange = np.arange(0,100)
+## how many sets to make 
 numsets = 10
 
 # example filename: heuristic_play_metapop1_20_RLparam32_RLseed398845_20260316_175238_id2.pkl
