@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=PPO2      ## Name of the job
+#SBATCH --job-name=perfgap      ## Name of the job
 #SBATCH --time=24:00:00           ## Job Duration
 #SBATCH --ntasks=1             ## Number of tasks (analyses) to run
 #SBATCH --cpus-per-task=8      ## The number of threads the code will use
