@@ -182,7 +182,7 @@ if __name__ == "__main__":
         info = {'heuristic_setid' : int(sys.argv[1])}
     else:
         info = None
-    calc_performance_gap(envsetting, actiontype = actiontype, iterations = 10, info = info)
+    calc_performance_gap(envsetting, actiontype = actiontype, iterations = 1000, info = info)
     #calc_performance_gap(2) # for testing, use runid=1
     elapsed = time.time() - t0
     print(f"Done. Elapsed time: {elapsed:.2f} seconds ({elapsed/60:.2f} minutes)")
