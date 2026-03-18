@@ -337,9 +337,13 @@ class metapop1:
         elif self.settingID == 22: # n=10 low centrality
             wbar1 = 1.6
             wbar2 = 1.6
+        elif self.settingID == 23: # n=10 high centrality
+            wbar1 = 1.6
+            wbar2 = 1.6
         elif self.settingID == 21: # n=20 
             wbar1 = 1.8
             wbar2 = 1.8
+        
         incoming_w_occupied = np.matmul(self.w, X) # incoming dispersal weight from occupied patches
 
         # assign actions based on heuristic rule

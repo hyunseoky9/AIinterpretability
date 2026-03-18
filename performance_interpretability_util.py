@@ -67,6 +67,10 @@ def calc_performance_gap(envsetting, actiontype = 'human', iterations = 1000, in
         config = {'seed': 398845, 'paramset':32}
     elif envsetting == 21:
         config = {'seed':  252358, 'paramset': 34}
+    elif envsetting == 22:
+        config = {'seed': 839394, 'paramset': 35}
+    elif envsetting == 23:
+        config = {'seed':  444253, 'paramset': 36}
     else:
         raise ValueError(f"Invalid envsetting: {envsetting}.")
 
@@ -176,7 +180,7 @@ def calc_performance_gap(envsetting, actiontype = 'human', iterations = 1000, in
 
 if __name__ == "__main__":
     t0 = time.time()
-    envsetting = 21 # 18(n5), 20(n10 median centrality), 21(n20)
+    envsetting = 22 # 18(n5), 20(n10 median centrality), 21(n20), 22 (n10 low centrality), 23 (n10 high centrality)
     actiontype =  'heuristic' # 'heuristic' or 'human'
     if actiontype == 'heuristic':
         info = {'heuristic_setid' : int(sys.argv[1])}
