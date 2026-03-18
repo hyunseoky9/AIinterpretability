@@ -329,11 +329,14 @@ class metapop1:
         
         # set wbar1 and wbar2 thresholds for heuristic rule based on settingID            
         if self.settingID == 18: # n=5
-            wbar1 = 1.75
-            wbar2 = 1.8
-        elif self.settingID in [20,22,23]: # n=10 median, low, high centrality
-            wbar1 = 1.8
-            wbar2 = 1.8
+            wbar1 = 1.6
+            wbar2 = 1.6
+        elif self.settingID == 20: # n=10 median centrality
+            wbar1 = 2.0
+            wbar2 = 2.0
+        elif self.settingID == 22: # n=10 low centrality
+            wbar1 = 1.6
+            wbar2 = 1.6
         elif self.settingID == 21: # n=20 
             wbar1 = 1.8
             wbar2 = 1.8
