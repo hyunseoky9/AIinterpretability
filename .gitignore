@@ -1,6 +1,7 @@
 value_iteration/
 PPO_results/
 human_play_results/
+heuristics_play_results/performance_gap_calculated/
 performance_summary/
 results/
 *.pyc
