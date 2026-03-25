@@ -37,7 +37,7 @@ def call_in_data(envid, with_valdiff=False, merge = False):
     
     return data_list, filenames
 
-def call_in_heuristic_data(envid, with_valdiff=False, merge = False):
+def call_in_heuristic_data(envid, heuristic_type=1, with_valdiff=False, merge = False):
     '''
     call in play data from heuristic play and return a list of dataframe.
     envid= environment id.
@@ -51,7 +51,7 @@ def call_in_heuristic_data(envid, with_valdiff=False, merge = False):
     files = os.listdir(data_dir)
     filenames = []
     for filename in files:
-        if f'heuristic_play_metapop1_{envid}' in filename:
+        if f'heuristic{heuristic_type}_play_metapop1_{envid}' in filename:
             with open(os.path.join(data_dir, filename), 'rb') as f:
                 data = pickle.load(f)
             data_list.append(data)

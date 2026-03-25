@@ -151,6 +151,21 @@ class metapop1:
             self.aidx = {'aS': np.arange(self.aS_dim)}
         if self.survey_is_action == 1:
             self.aidx['aY'] = np.arange(self.aY_dim)+self.aidx[list(self.aidx.keys())[-1]][-1]+1
+
+        # some heuristics variables
+        # heur2
+        self.eprob_th = 0.5
+        self.cprob_th = 0.5
+        # heur3
+        self.s_th = 0.5 # supplementation threshold: only supplement if gain_S > s_th * cs
+        self.r_th = 0.5 # restoration threshold: only restore if gain_R > r_th * cr
+        self.w_ext = 1.0   # importance of reducing extinction in heuristics
+        self.w_col = 0.5   # importance of increasing colonization in heuristics
+        # heur4 
+        self.w1 = 1.0        # weight on centrality
+        self.w2 = 1.0        # penalty on colonization probability
+        self.tau_supp = 0.0  # supplementation threshold
+        
         # initialize state and observation
         self.obs, self.state = self.reset()
 
@@ -302,9 +317,10 @@ class metapop1:
         Y[M==1] = X[M==1] * np.random.choice([1,0], size=np.sum(M), p=[self.pdet, 1-self.pdet]) + (1-X[M==1]) * np.random.choice([1,0], size=np.sum(M), p=[self.pfp, 1-self.pfp]) # initial survey observation
         return M, Y 
 
-    def heuristic_action(self):
+    def heuristic_action(self, ruletype=1, info=None):
         '''
         heuristic rule for no dispersal regime, no partial observability, and no terminal penalty.
+        ruletype = 1
         * Prioritize patches with higher incoming dispersal weight from all patches
         * no action on the last 2 steps if patch abundance is 10 or 20; no action on the last step if patch abundance is 5.
         - if extinct and bad habitat: restore and supplement
@@ -312,6 +328,15 @@ class metapop1:
         - if persisting and bad habitat and incoming dispersal weight from persisting patches is below w^bar_2: restore and supplement
         - if persisting and bad habitat and incoming dispersal weight from persisting patches is equal or above w^bar_2: restore only
         - if persisting and good habitat: no action
+
+        ruletype = 2
+        - restore patches from highest to lowest incoming weights until you run out of restoration actions.
+        - from highest incoming weights to lowest incoming weights, 
+        supplement persisting patches if extinction prob is greater 
+        than x
+         OR 
+        extinct patches if colonization prob is lower than y.
+        Only supplement patches that are good habitat or being restored to good habitat.
         '''
 
         if self.dim2state == 1:
@@ -326,67 +351,386 @@ class metapop1:
             Z = self.obs[0,self.oidx["Z"]] if self.dim2state == 1 else self.obs[self.oidx["Z"]][0]
         else: 
             Z = 0
-        
-        # set wbar1 and wbar2 thresholds for heuristic rule based on settingID            
-        if self.settingID == 18: # n=5
-            wbar1 = 1.6
-            wbar2 = 1.6
-        elif self.settingID == 20: # n=10 median centrality
-            wbar1 = 2.0
-            wbar2 = 2.0
-        elif self.settingID == 22: # n=10 low centrality
-            wbar1 = 1.6
-            wbar2 = 1.6
-        elif self.settingID == 23: # n=10 high centrality
-            wbar1 = 1.6
-            wbar2 = 1.6
-        elif self.settingID == 21: # n=20 
-            wbar1 = 1.8
-            wbar2 = 1.8
-        
-        incoming_w_occupied = np.matmul(self.w, X) # incoming dispersal weight from occupied patches
+        if ruletype == 1:
+            # set wbar1 and wbar2 thresholds for heuristic rule based on settingID            
+            if self.settingID == 18: # n=5
+                wbar1 = 1.6
+                wbar2 = 1.6
+            elif self.settingID == 20: # n=10 median centrality
+                wbar1 = 2.0
+                wbar2 = 2.0
+            elif self.settingID == 22: # n=10 low centrality
+                wbar1 = 1.6
+                wbar2 = 1.6
+            elif self.settingID == 23: # n=10 high centrality
+                wbar1 = 1.6
+                wbar2 = 1.6
+            elif self.settingID == 21: # n=20 
+                wbar1 = 1.8
+                wbar2 = 1.8
+            
+            incoming_w_occupied = np.matmul(self.w, X) # incoming dispersal weight from occupied patches
 
-        # assign actions based on heuristic rule
-        noactiontime = self.T - 2 if self.patchnum in [10,20] else self.T - 1
-        if t >= noactiontime : # no action on the last few steps
-            return np.zeros(self.actionspace_dim, dtype=int)
-        else:
-            ridx = []
-            sidx = []
+            # assign actions based on heuristic rule
+            noactiontime = self.T - 2 if self.patchnum in [10,20] else self.T - 1
+            if t >= noactiontime : # no action on the last few steps
+                return np.zeros(self.actionspace_dim, dtype=int)
+            else:
+                ridx = []
+                sidx = []
+                aR = np.zeros(self.aR_dim, dtype=int)
+                aS = np.zeros(self.aS_dim, dtype=int)
+                bothactionidx = []
+                for i in range(self.patchnum):
+                    if X[i] == 0 and H[i] == 0: # extinct and bad habitat
+                        ridx.append(i)
+                        sidx.append(i)
+                        bothactionidx.append(i)
+                    elif X[i] == 0 and H[i] == 1 and incoming_w_occupied[i] <= wbar1: # extinct and good habitat and low incoming dispersal weight
+                        sidx.append(i)
+                    elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] <= wbar2: # persisting and bad habitat and low incoming dispersal weight
+                        ridx.append(i)
+                        sidx.append(i)
+                        bothactionidx.append(i)
+                    elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] >= wbar2: # persisting and bad habitat and high incoming dispersal weight
+                        ridx.append(i)
+                # sort by incoming dispersal weight and cut by self.kR and self.kS
+                
+                newridx = sorted(ridx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kR] if len(ridx) > self.kR else ridx
+                newsidx = sorted(sidx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kS] if len(sidx) > self.kS else sidx
+                # if patches that have both actions get taken off of one of the actions, they
+                # should get taken off of the other action as well.
+                for i in bothactionidx:
+                    if i in ridx and i not in newridx:
+                        if i in newsidx:
+                            newsidx.remove(i)
+                    elif i in sidx and i not in newsidx:
+                        if i in newridx:
+                            newridx.remove(i)
+                # create action vector
+                if len(ridx) > 0:
+                    aR[np.array(newridx)] = 1
+                if len(sidx) > 0:
+                    aS[np.array(newsidx)] = 1
+                action = np.concatenate([aR, aS])
+                return action
+
+        elif ruletype == 2:
+            
+            connectivity = self.w @ X # connectivity for each patch based on current occupancy and dispersal weights
+            incoming_w =  np.sum(self.w, axis=0) # incoming dispersal weight for each patch
+            cprob = 1 - np.exp(-self.alph0 * connectivity * (1 + self.alphZ * Z) * (1 + self.alphH * H))
+            eprob = (1/(1+np.exp(-(self.beta0 - self.betaH * H)))) * (1 - cprob)
+            # sort patches by incoming dispersal weight. 
+            sorted_patches = sorted(range(self.patchnum), key=lambda x: incoming_w[x], reverse=True)
             aR = np.zeros(self.aR_dim, dtype=int)
             aS = np.zeros(self.aS_dim, dtype=int)
-            bothactionidx = []
-            for i in range(self.patchnum):
-                if X[i] == 0 and H[i] == 0: # extinct and bad habitat
-                    ridx.append(i)
-                    sidx.append(i)
-                    bothactionidx.append(i)
-                elif X[i] == 0 and H[i] == 1 and incoming_w_occupied[i] <= wbar1: # extinct and good habitat and low incoming dispersal weight
-                    sidx.append(i)
-                elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] <= wbar2: # persisting and bad habitat and low incoming dispersal weight
-                    ridx.append(i)
-                    sidx.append(i)
-                    bothactionidx.append(i)
-                elif X[i] == 1 and H[i] == 0 and incoming_w_occupied[i] >= wbar2: # persisting and bad habitat and high incoming dispersal weight
-                    ridx.append(i)
-            # sort by incoming dispersal weight and cut by self.kR and self.kS
+            arcount = 0 
+            ascount = 0
+
+            if self.settingID == 18: # n=5
+                self.eprob_th = 0.9
+                self.cprob_th = 0.8
+            elif self.settingID == 20: # n=10 median centrality
+                self.eprob_th = 0.8
+                self.cprob_th = 0.2
+            elif self.settingID == 21: # n=20 
+                self.eprob_th = 0.8
+                self.cprob_th = 0.2
+            elif self.settingID == 22: # n=10 low centrality
+                self.eprob_th = 0.8
+                self.cprob_th = 0.2
+            elif self.settingID == 23: # n=10 high centrality
+                self.eprob_th = 0.9
+                self.cprob_th = 0.2
+
+            if t >= self.T - 2: # no action on the last few steps
+                return np.zeros(self.actionspace_dim, dtype=int)
             
-            newridx = sorted(ridx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kR] if len(ridx) > self.kR else ridx
-            newsidx = sorted(sidx, key=lambda x: self.incoming_w[x], reverse=True)[:self.kS] if len(sidx) > self.kS else sidx
-            # if patches that have both actions get taken off of one of the actions, they
-            # should get taken off of the other action as well.
-            for i in bothactionidx:
-                if i in ridx and i not in newridx:
-                    if i in newsidx:
-                        newsidx.remove(i)
-                elif i in sidx and i not in newsidx:
-                    if i in newridx:
-                        newridx.remove(i)
-            # create action vector
-            if len(ridx) > 0:
-                aR[np.array(newridx)] = 1
-            if len(sidx) > 0:
-                aS[np.array(newsidx)] = 1
+            for i in sorted_patches:
+                if arcount >= self.kR and ascount >= self.kS: # if we have already allocated all actions, break
+                    break
+                if X[i] == 1: # if patch is occupied
+                    # restoration
+                    if H[i] == 0 and arcount < self.kR: # if habitat is bad, restore if we have restoration actions left
+                        aR[i] = 1
+                        arcount += 1
+                    # supplementation
+                    if (H[i] == 1 or aR[i] == 1) and eprob[i] > self.eprob_th and ascount < self.kS: # if extinction probability is greater than threshold, supplement if we have supplementation actions left
+                        aS[i] = 1
+                        ascount += 1
+                else: # if patch is unoccupied
+                    # restoration
+                    if H[i] == 0 and arcount < self.kR: # if habitat is bad, restore if we have restoration actions left
+                        aR[i] = 1
+                        arcount += 1
+                    # supplementation
+                    if (H[i] == 1 or aR[i] == 1) and cprob[i] < self.cprob_th and ascount < self.kS: # if habitat is good and colonization probability is low, supplement if we have supplementation actions left
+                        aS[i] = 1
+                        ascount += 1
             action = np.concatenate([aR, aS])
             return action
+        elif ruletype == 3:
+            """
+            Greedy reward-per-cost heuristic
 
+            - Compute marginal gain for restoration and supplementation
+            - Rank actions by gain / cost
+            - Select top-kR and top-kS
+            """
+
+            if self.settingID == 18: # n=5
+                self.s_th = 2.0
+                self.r_th = 2.4
+                self.w_ext = 2.0
+                self.w_col = 1.5
+            elif self.settingID == 20: # n=10 median centrality
+                self.s_th = 4.0
+                self.r_th = 2.9
+                self.w_ext = 2.5
+                self.w_col = 2.0
+            elif self.settingID == 21: # n=20
+                self.s_th = 5.0
+                self.r_th = 2.9
+                self.w_ext = 2.0
+                self.w_col = 0.5
+            elif self.settingID == 22: # n=10 low centrality
+                self.s_th = 4.0
+                self.r_th = 2.85
+                self.w_ext = 2.0
+                self.w_col = 2.0
+            elif self.settingID == 23: # n=10 high centrality
+                self.s_th = 4.5
+                self.r_th = 2.9
+                self.w_ext = 2.0
+                self.w_col = 1.5
+                
+            # ===== No action at very end (same logic as yours) =====
+            if t >= self.T - 2:
+                return np.zeros(self.actionspace_dim, dtype=int)
+
+            # ===== Compute baseline probabilities =====
+            connectivity = self.w @ X
+            cprob = 1 - np.exp(-self.alph0 * connectivity * (1 + self.alphZ * Z) * (1 + self.alphH * H))
+            eprob = (1/(1+np.exp(-(self.beta0 - self.betaH * H)))) * (1 - cprob)
+
+            # ===== Containers =====
+            R_scores = np.zeros(self.patchnum)
+            S_scores = np.zeros(self.patchnum)
+
+            # ===== Loop over patches =====
+            for i in range(self.patchnum):
+
+                # =========================
+                # SUPPLEMENTATION GAIN
+                # =========================
+                if X[i] == 0:
+                    gain_S = self.qs * (1 - cprob[i])
+                else:
+                    gain_S = self.qs * eprob[i]
+
+                S_scores[i] = gain_S / (self.cs + 1e-8)
+
+                # =========================
+                # RESTORATION GAIN
+                # =========================
+                if H[i] == 1:
+                    R_scores[i] = 0.0
+                    continue
+
+                # simulate H=1
+                H_new = 1
+
+                cprob_new = 1 - np.exp(-self.alph0 * connectivity[i] * (1 + self.alphZ * Z) * (1 + self.alphH * H_new))
+                eprob_new = (1/(1+np.exp(-(self.beta0 - self.betaH * H_new)))) * (1 - cprob_new)
+
+                delta_ext = eprob[i] - eprob_new
+                delta_col = cprob_new - cprob[i]
+
+                gain_R = self.w_ext * delta_ext + self.w_col * delta_col
+
+                R_scores[i] = gain_R / (self.cr + 1e-8)
+
+            # ===== Select top actions =====
+            aR = np.zeros(self.aR_dim, dtype=int)
+            aS = np.zeros(self.aS_dim, dtype=int)
+
+            # sort indices
+            R_idx = np.argsort(-R_scores)
+            S_idx = np.argsort(-S_scores)
+
+            # ===== Restoration selection =====
+            r_count = 0
+            for i in R_idx:
+                if r_count >= self.kR:
+                    break
+                if R_scores[i] > self.r_th:   # only take beneficial actions
+                    aR[i] = 1
+                    r_count += 1
+
+            # ===== Supplementation selection =====
+            s_count = 0
+            for i in S_idx:
+                if s_count >= self.kS:
+                    break
+                if S_scores[i] > self.s_th:   # only take beneficial actions
+                    aS[i] = 1
+                    s_count += 1
+
+            action = np.concatenate([aR, aS])
+            return action
+        elif ruletype == 4:
+            """
+            Centrality + Recovery Potential heuristic
+
+            Rule A: Restoration
+            - Target H=0 patches
+            - Rank by centrality (incoming + outgoing weights)
+
+            Rule B: Supplementation
+            - Target X=0 patches
+            - Score = w1 * centrality - w2 * colonization_prob
+            - Only act if score > tau_supp
+            """
+
+            if self.settingID == 18: # n=5
+                self.w1 =0.92
+                self.tau_supp = 0.16
+            elif self.settingID == 20: # n=10 median centrality
+                self.w1 = 0.97
+                self.tau_supp = 0.24
+            elif self.settingID == 21: # n=20
+                self.w1 = 0.95
+                self.tau_supp = 0.1
+            elif self.settingID == 22: # n=10 low centrality
+                self.w1 = 0.92
+                self.tau_supp = 0.22
+            elif self.settingID == 23: # n=10 high centrality
+                foo=0
+            self.w2 = 1-self.w1
+            # ===== Optional: no action late =====
+            if t >= self.T - 2:
+                return np.zeros(self.actionspace_dim, dtype=int)
+
+            # ===== Connectivity + colonization =====
+            connectivity = self.w @ X
+            cprob = 1 - np.exp(-self.alph0 * connectivity * (1 + self.alphZ * Z) * (1 + self.alphH * H))
+
+            # ===== CENTRALITY SCORE =====
+            # incoming + outgoing weights
+            incoming = np.sum(self.w, axis=0)
+            centrality = incoming    # S_i^C
+
+
+            # ===== ACTION ARRAYS =====
+            aR = np.zeros(self.aR_dim, dtype=int)
+            aS = np.zeros(self.aS_dim, dtype=int)
+
+            # ==================================================
+            # RULE A: RESTORATION (H == 0)
+            # ==================================================
+            restore_candidates = np.where(H == 0)[0]
+
+            if len(restore_candidates) > 0:
+                # rank by centrality
+                sorted_R = sorted(restore_candidates, key=lambda i: centrality[i], reverse=True)
+                # take top kR
+                selected_R = sorted_R[:self.kR]
+                aR[selected_R] = 1
+
+
+            # ==================================================
+            # RULE B: SUPPLEMENTATION (X == 0)
+            # ==================================================
+            supplement_candidates = np.where(X == 0)[0]
+
+            S_scores = np.full(self.patchnum, 0.0)
+            if len(supplement_candidates) > 0:
+                S_scores[supplement_candidates] = (self.w1 * centrality[supplement_candidates]/3) - (self.w2 * cprob[supplement_candidates])
+            # sort by score
+            sorted_S = np.argsort(-S_scores)
+
+            s_count = 0
+            for i in sorted_S:
+                if s_count >= self.kS:
+                    break
+                if i in supplement_candidates and S_scores[i] > self.tau_supp:
+                    aS[i] = 1
+                    s_count += 1
+
+            # ===== Combine =====
+            action = np.concatenate([aR, aS])
+            return action
+        elif ruletype == 5:
+            """
+            Post-RL heuristic (V5):
+            1) Stop all actions very late.
+            2) Stop restoration earlier than supplementation.
+            3) Restore degraded patches by structural importance with occupancy bonus.
+            4) Supplement extinct patches with good habitat or those restored now.
+            """
+
+            # Defaults tuned per environment setting.
+            if self.settingID == 18:  # n=5
+                stop_last_n = 2
+                stop_restore_last_n = 7
+                rest_w_X = 0.5
+                rest_w_W = 2.0
+            elif self.settingID == 20:  # n=10 median centrality
+                stop_last_n = 2
+                stop_restore_last_n = 7
+                rest_w_X = 0.5
+                rest_w_W = 2.0
+            elif self.settingID == 21:  # n=20
+                stop_last_n = 2
+                stop_restore_last_n = 9
+                rest_w_X = 0.25
+                rest_w_W = 4.0
+            elif self.settingID == 22:  # n=10 low centrality
+                stop_last_n = 2
+                stop_restore_last_n = 7
+                rest_w_X = 0.5
+                rest_w_W = 2.0
+            elif self.settingID == 23:  # n=10 high centrality
+                stop_last_n = 2
+                stop_restore_last_n = 7
+                rest_w_X = 0.5
+                rest_w_W = 2.0
+            else:
+                stop_last_n = 2
+                stop_restore_last_n = 2
+                rest_w_X = 0.5
+                rest_w_W = 2.0
+
+            aR = np.zeros(self.aR_dim, dtype=int)
+            aS = np.zeros(self.aS_dim, dtype=int)
+
+            remaining = self.T - t
+
+            # Rule 1: stop all actions in the final steps.
+            if remaining <= stop_last_n:
+                return np.concatenate([aR, aS])
+
+            # Rule 2: restoration in early/mid game only.
+            if remaining > stop_restore_last_n:
+                degraded_idx = np.where(H == 0)[0]
+                if degraded_idx.size > 0:
+                    rest_scores = rest_w_X * X[degraded_idx] + rest_w_W * self.incoming_w[degraded_idx]
+                    ranked_local = np.argsort(-rest_scores)
+                    selected_local = ranked_local[:min(self.kR, degraded_idx.size)]
+                    selected_restore = degraded_idx[selected_local]
+                    aR[selected_restore] = 1
+
+            # Rule 3: supplementation for extinct patches with good habitat
+            # (or those restored now), capped at supplementation budget.
+            supplement_candidates = np.where((X == 0) & ((H == 1) | (aR == 1)))[0]
+            if supplement_candidates.size > 0:
+                supp_scores = self.incoming_w[supplement_candidates]
+                ranked_supp = np.argsort(-supp_scores)
+                selected_supp = supplement_candidates[ranked_supp[:min(self.kS, supplement_candidates.size)]]
+                aS[selected_supp] = 1
+
+            return np.concatenate([aR, aS])
+        else:
+            return np.zeros(self.actionspace_dim, dtype=int)
+            
