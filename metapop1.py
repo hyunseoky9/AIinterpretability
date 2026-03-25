@@ -593,20 +593,21 @@ class metapop1:
             - Only act if score > tau_supp
             """
 
-            if self.settingID == 18: # n=5
+            if self.settingID in [18,24,25]: # n=5
                 self.w1 =0.92
                 self.tau_supp = 0.16
-            elif self.settingID == 20: # n=10 median centrality
+            elif self.settingID in [20,26,27]: # n=10 median centrality
                 self.w1 = 0.97
                 self.tau_supp = 0.24
-            elif self.settingID == 21: # n=20
+            elif self.settingID in [21,28,29]: # n=20
                 self.w1 = 0.95
                 self.tau_supp = 0.1
-            elif self.settingID == 22: # n=10 low centrality
+            elif self.settingID in [22,30,31]: # n=10 low centrality
                 self.w1 = 0.92
                 self.tau_supp = 0.22
-            elif self.settingID == 23: # n=10 high centrality
-                foo=0
+            elif self.settingID in [23,32,33]: # n=10 high centrality
+                self.w1 = 0.98
+                self.tau_supp = 0.14
             self.w2 = 1-self.w1
             # ===== Optional: no action late =====
             if t >= self.T - 2:
@@ -671,27 +672,27 @@ class metapop1:
             """
 
             # Defaults tuned per environment setting.
-            if self.settingID == 18:  # n=5
+            if self.settingID in [18,24,25]:  # n=5
                 stop_last_n = 2
                 stop_restore_last_n = 7
                 rest_w_X = 0.5
                 rest_w_W = 2.0
-            elif self.settingID == 20:  # n=10 median centrality
+            elif self.settingID in [20,26,27]:  # n=10 median centrality
                 stop_last_n = 2
                 stop_restore_last_n = 7
                 rest_w_X = 0.5
                 rest_w_W = 2.0
-            elif self.settingID == 21:  # n=20
+            elif self.settingID in [21,28,29]:  # n=20
                 stop_last_n = 2
                 stop_restore_last_n = 9
                 rest_w_X = 0.25
                 rest_w_W = 4.0
-            elif self.settingID == 22:  # n=10 low centrality
+            elif self.settingID in [22,30,31]:  # n=10 low centrality
                 stop_last_n = 2
                 stop_restore_last_n = 7
                 rest_w_X = 0.5
                 rest_w_W = 2.0
-            elif self.settingID == 23:  # n=10 high centrality
+            elif self.settingID in [23,32,33]:  # n=10 high centrality
                 stop_last_n = 2
                 stop_restore_last_n = 7
                 rest_w_X = 0.5
