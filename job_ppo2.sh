@@ -9,7 +9,7 @@ PARAM_ID=$1
 # Generate a random session ID between 0 and 100000
 SESSION_ID=$(( RANDOM % 100001 ))
 SESSION_NAME="${SESSION_ID}_${PARAM_ID}_PPO2"
-LOGFILE="zztrain_${PARAM_ID}_${SESSION_ID}.log"
+LOGFILE="zztrainPPO2_${PARAM_ID}_${SESSION_ID}.log"
 
 echo "Launching PPO2 training:"
 echo "  paramID: ${PARAM_ID}"

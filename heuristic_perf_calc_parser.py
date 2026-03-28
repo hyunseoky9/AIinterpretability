@@ -4,18 +4,18 @@ import numpy as np
 
 # SETTING
 ## what to parse
-envsetting = 23
+envsetting = 21
 idrange = np.arange(0,100)
 ## how many sets to make 
 numsets = 10
-
+heurtype = 4
 # example filename: heuristic_play_metapop1_20_RLparam32_RLseed398845_20260316_175238_id2.pkl
 
 # 1. get all heuristic play result files for the given envsetting and date range.
 base_dir = './heuristics_play_results'
 pickle_filenames = []
 for filename in os.listdir(base_dir):
-    if f'_{envsetting}_' in filename:
+    if f'_{envsetting}_' in filename and f'heuristic{heurtype}_' in filename:
         id = int(filename.split('_id')[-1].split('.pkl')[0])
         if id in idrange:
             pickle_filenames.append(os.path.join(base_dir, filename))

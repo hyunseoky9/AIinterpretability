@@ -165,6 +165,8 @@ class metapop1:
         self.w1 = 1.0        # weight on centrality
         self.w2 = 1.0        # penalty on colonization probability
         self.tau_supp = 0.0  # supplementation threshold
+        # heur5 
+        self.w_col = 1.0
         
         # initialize state and observation
         self.obs, self.state = self.reset()
@@ -353,19 +355,19 @@ class metapop1:
             Z = 0
         if ruletype == 1:
             # set wbar1 and wbar2 thresholds for heuristic rule based on settingID            
-            if self.settingID == 18: # n=5
+            if self.settingID in [18,24,25]: # n=5
                 wbar1 = 1.6
                 wbar2 = 1.6
-            elif self.settingID == 20: # n=10 median centrality
+            elif self.settingID in [20,26,27]: # n=10 median centrality
                 wbar1 = 2.0
                 wbar2 = 2.0
-            elif self.settingID == 22: # n=10 low centrality
+            elif self.settingID in [22,30,31]: # n=10 low centrality
                 wbar1 = 1.6
                 wbar2 = 1.6
-            elif self.settingID == 23: # n=10 high centrality
+            elif self.settingID in [23,32,33]: # n=10 high centrality
                 wbar1 = 1.6
                 wbar2 = 1.6
-            elif self.settingID == 21: # n=20 
+            elif self.settingID in [21,28,29]: # n=20 
                 wbar1 = 1.8
                 wbar2 = 1.8
             
@@ -428,19 +430,19 @@ class metapop1:
             arcount = 0 
             ascount = 0
 
-            if self.settingID == 18: # n=5
+            if self.settingID in [18,24,25]: # n=5
                 self.eprob_th = 0.9
                 self.cprob_th = 0.8
-            elif self.settingID == 20: # n=10 median centrality
+            elif self.settingID in [20,26,27]: # n=10 median centrality
                 self.eprob_th = 0.8
                 self.cprob_th = 0.2
-            elif self.settingID == 21: # n=20 
+            elif self.settingID in [21,28,29]: # n=20 
                 self.eprob_th = 0.8
                 self.cprob_th = 0.2
-            elif self.settingID == 22: # n=10 low centrality
+            elif self.settingID in [22,30,31]: # n=10 low centrality
                 self.eprob_th = 0.8
                 self.cprob_th = 0.2
-            elif self.settingID == 23: # n=10 high centrality
+            elif self.settingID in [23,32,33]: # n=10 high centrality
                 self.eprob_th = 0.9
                 self.cprob_th = 0.2
 
@@ -479,27 +481,27 @@ class metapop1:
             - Select top-kR and top-kS
             """
 
-            if self.settingID == 18: # n=5
+            if self.settingID in [18,24,25]: # n=5
                 self.s_th = 2.0
                 self.r_th = 2.4
                 self.w_ext = 2.0
                 self.w_col = 1.5
-            elif self.settingID == 20: # n=10 median centrality
+            elif self.settingID in [20,26,27]: # n=10 median centrality
                 self.s_th = 4.0
                 self.r_th = 2.9
                 self.w_ext = 2.5
                 self.w_col = 2.0
-            elif self.settingID == 21: # n=20
+            elif self.settingID in [21,28,29]: # n=20
                 self.s_th = 5.0
                 self.r_th = 2.9
                 self.w_ext = 2.0
                 self.w_col = 0.5
-            elif self.settingID == 22: # n=10 low centrality
+            elif self.settingID in [22,30,31]: # n=10 low centrality
                 self.s_th = 4.0
                 self.r_th = 2.85
                 self.w_ext = 2.0
                 self.w_col = 2.0
-            elif self.settingID == 23: # n=10 high centrality
+            elif self.settingID in [23,32,33]: # n=10 high centrality
                 self.s_th = 4.5
                 self.r_th = 2.9
                 self.w_ext = 2.0
@@ -670,7 +672,8 @@ class metapop1:
             3) Restore degraded patches by structural importance with occupancy bonus.
             4) Supplement extinct patches with good habitat or those restored now.
             """
-
+            connectivity = self.w @ X # connectivity for each patch based on current occupancy and dispersal weights
+            cprob = 1 - np.exp(-self.alph0 * connectivity * (1 + self.alphZ * Z) * (1 + self.alphH * H))
             # Defaults tuned per environment setting.
             if self.settingID in [18,24,25]:  # n=5
                 stop_last_n = 2
@@ -702,7 +705,6 @@ class metapop1:
                 stop_restore_last_n = 2
                 rest_w_X = 0.5
                 rest_w_W = 2.0
-
             aR = np.zeros(self.aR_dim, dtype=int)
             aS = np.zeros(self.aS_dim, dtype=int)
 
@@ -722,13 +724,14 @@ class metapop1:
                     selected_restore = degraded_idx[selected_local]
                     aR[selected_restore] = 1
 
-            # Rule 3: supplementation for extinct patches with good habitat
+            # Rule 3: supplementation for extinct patches with good habitat unless colonization probability is over w_col
             # (or those restored now), capped at supplementation budget.
             supplement_candidates = np.where((X == 0) & ((H == 1) | (aR == 1)))[0]
             if supplement_candidates.size > 0:
                 supp_scores = self.incoming_w[supplement_candidates]
                 ranked_supp = np.argsort(-supp_scores)
                 selected_supp = supplement_candidates[ranked_supp[:min(self.kS, supplement_candidates.size)]]
+                selected_supp = selected_supp[cprob[selected_supp] <= self.w_col]
                 aS[selected_supp] = 1
 
             return np.concatenate([aR, aS])
