@@ -180,8 +180,8 @@ def calc_performance_gap(envsetting, actiontype = 'human', iterations = 1000, in
 
 if __name__ == "__main__":
     t0 = time.time()
-    envsetting = 23 # 18(n5), 20(n10 median centrality), 21(n20), 22 (n10 low centrality), 23 (n10 high centrality)
-    actiontype =  'human' # 'heuristic' or 'human'
+    envsetting = 21 # 18(n5), 20(n10 median centrality), 21(n20), 22 (n10 low centrality), 23 (n10 high centrality)
+    actiontype =  'heuristic' # 'heuristic' or 'human'
     if actiontype == 'heuristic':
         info = {'heuristic_setid' : int(sys.argv[1])}
     else:
