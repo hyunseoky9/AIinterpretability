@@ -4,7 +4,7 @@ import numpy as np
 
 # SETTING
 ## what to parse
-envsetting = 23
+envsetting = 21
 idrange = np.arange(0,100)
 ## how many sets to make 
 numsets = 10
